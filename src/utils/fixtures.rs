@@ -49,7 +49,7 @@ impl TestContext {
         &self,
         denoms: (TDenomA, TDenomB),
     ) -> Result<CosmWasm, Error> {
-        let auction_contract = self.get_contract(AUCTION_CONTRACT_NAME)?;
+        let mut auction_contract = self.get_contract(AUCTION_CONTRACT_NAME)?;
 
         // The auctions manager for this deployment
         let contract_a = self.get_auctions_manager()?;
@@ -61,7 +61,12 @@ impl TestContext {
             }
         }));
 
-        println!("{:?}", resp);
+        auction_contract.contract_addr = Some(
+            resp.get("data")
+                .and_then(|json| json.as_str())
+                .ok_or(Error::Misc(format!("tx failed with resp: {:?}", resp)))?
+                .to_owned(),
+        );
 
         Ok(auction_contract)
     }

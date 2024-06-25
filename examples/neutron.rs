@@ -1,5 +1,5 @@
 use localic_utils::{
-    types::contract::{AuctionStrategy, ChainHaltConfig, PriceFreshnessStrategy},
+    types::contract::{AuctionStrategy, ChainHaltConfig, MinAmount, PriceFreshnessStrategy},
     ConfigChainBuilder, TestContextBuilder,
 };
 use std::error::Error;
@@ -32,7 +32,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Deploy valence auctions
     ctx.tx_create_auctions_manager(
         "acc0",
-        [("untrn", "0")],
+        [(
+            String::from("untrn"),
+            MinAmount {
+                send: "0".into(),
+                start_auction: "0".into(),
+            },
+        )],
         "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
     )?;
 

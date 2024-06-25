@@ -2,7 +2,8 @@ use super::super::{
     super::{
         error::Error,
         types::contract::{
-            AuctionStrategy, ChainHaltConfig, DeployedContractInfo, PriceFreshnessStrategy,
+            AuctionStrategy, ChainHaltConfig, DeployedContractInfo, MinAmount,
+            PriceFreshnessStrategy,
         },
         AUCTIONS_MANAGER_CONTRACT_NAME, AUCTION_CONTRACT_NAME, NEUTRON_CHAIN_ID,
     },
@@ -13,14 +14,11 @@ use localic_std::modules::cosmwasm::CosmWasm;
 impl TestContext {
     /// Creates an auction manager on Neutron, updating the autions manager
     /// code id and address in the TestContext.
-    pub fn tx_create_auctions_manager<
-        TMinAucElem: AsRef<str>,
-        TMinAucColl: AsRef<[(TMinAucElem, TMinAucElem)]>,
-    >(
+    pub fn tx_create_auctions_manager(
         &mut self,
         sender_key: &str,
-        min_auction_amount: TMinAucColl,
-        server_addr: &str,
+        min_auction_amount: impl AsRef<[(String, MinAmount)]>,
+        server_addr: impl AsRef<str>,
     ) -> Result<(), Error> {
         let mut contract_a: CosmWasm = self.get_contract(AUCTIONS_MANAGER_CONTRACT_NAME)?;
         let neutron = self.get_chain(NEUTRON_CHAIN_ID);
@@ -37,8 +35,8 @@ impl TestContext {
             sender_key,
             serde_json::json!({
                 "auction_code_id": auction_code_id,
-                "min_auction_amount": min_auction_amount.as_ref().iter().map(|elem| (elem.0.as_ref(), elem.1.as_ref())).collect::<Vec<_>>(),
-                "server_addr": server_addr,
+                "min_auction_amount": min_auction_amount.as_ref(),
+                "server_addr": server_addr.as_ref(),
             })
             .to_string()
             .as_str(),
@@ -100,7 +98,7 @@ impl TestContext {
             }})
             .to_string()
             .as_str(),
-            format!("--amount {amount_denom_a}{denom_a}").as_str(),
+            format!("--amount {amount_denom_a}{denom_a} --gas 2000000").as_str(),
         )?;
 
         log::debug!(

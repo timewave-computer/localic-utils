@@ -26,3 +26,9 @@ pub struct ChainHaltConfig {
     pub cap: String,
     pub block_avg: String,
 }
+
+#[derive(Serialize)]
+pub struct MinAmount {
+    pub send: String,
+    pub start_auction: String,
+}

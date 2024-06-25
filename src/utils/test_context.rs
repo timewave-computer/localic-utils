@@ -1,4 +1,7 @@
-use super::super::{types::config::ConfigChain, TRANSFER_PORT};
+use super::super::{
+    types::{config::ConfigChain, contract::DeployedContractInfo},
+    TRANSFER_PORT,
+};
 use cosmwasm_std::{StdError, StdResult};
 use localic_std::{
     errors::LocalError, modules::cosmwasm::CosmWasm, relayer::Channel, relayer::Relayer,
@@ -18,113 +21,138 @@ pub enum BuildError {
 /// A configurable builder that can be used to create a TestContext.
 #[derive(Default)]
 pub struct TestContextBuilder {
-    chains: Vec<LocalChainBuilder>,
+    chains: Vec<ConfigChain>,
     api_url: Option<String>,
     transfer_channel_ids: HashMap<(String, String), String>,
     ccv_channel_ids: HashMap<(String, String), String>,
     connection_ids: HashMap<(String, String), String>,
     ibc_denoms: HashMap<(String, String), String>,
+    artifacts_dir: Option<String>,
 }
 
 impl TestContextBuilder {
     /// Resets the chains that this builder will create a context for to the specified value.
-    pub fn with_chains(&mut self, chains: Vec<LocalChainBuilder>) -> &mut Self {
-        self.chains = chains;
+    pub fn chains(&mut self, chains: impl Into<Vec<ConfigChain>>) -> &mut Self {
+        self.chains = chains.into();
 
         self
     }
 
     /// Adds the specified chain to the context built by the builder.
-    pub fn with_chain(&mut self, chain: LocalChainBuilder) -> &mut Self {
+    pub fn chain(&mut self, chain: ConfigChain) -> &mut Self {
         self.chains.push(chain);
 
         self
     }
 
     /// Sets the local-ic endpoint that the built context will interact with.
-    pub fn with_api_url(&mut self, api_url: String) -> &mut Self {
-        self.api_url = Some(api_url);
+    pub fn api_url(&mut self, api_url: impl Into<String>) -> &mut Self {
+        self.api_url = Some(api_url.into());
 
         self
     }
 
     /// Sets the transfer channel ID map to the specified map.
-    pub fn with_transfer_channel_ids(
+    pub fn transfer_channel_ids(
         &mut self,
-        ids: HashMap<(String, String), String>,
+        ids: impl Into<HashMap<(String, String), String>>,
     ) -> &mut Self {
-        self.transfer_channel_ids = ids;
+        self.transfer_channel_ids = ids.into();
 
         self
     }
 
     /// Inserts a given channel ID for a chain pair into the builder.
-    pub fn with_transfer_channel_id(
+    pub fn transfer_channel_id(
         &mut self,
-        chain_a: String,
-        chain_b: String,
-        channel_id: String,
+        chain_a: impl Into<String>,
+        chain_b: impl Into<String>,
+        channel_id: impl Into<String>,
     ) -> &mut Self {
         self.transfer_channel_ids
-            .insert((chain_a, chain_b), channel_id);
+            .insert((chain_a.into(), chain_b.into()), channel_id.into());
 
         self
     }
 
     /// Sets the transfer channel ID map to the specified map.
-    pub fn with_ccv_channel_ids(&mut self, ids: HashMap<(String, String), String>) -> &mut Self {
-        self.ccv_channel_ids = ids;
+    pub fn ccv_channel_ids(
+        &mut self,
+        ids: impl Into<HashMap<(String, String), String>>,
+    ) -> &mut Self {
+        self.ccv_channel_ids = ids.into();
 
         self
     }
 
     /// Inserts a given channel ID for a chain pair into the builder.
-    pub fn with_ccv_channel_id(
+    pub fn ccv_channel_id(
         &mut self,
-        chain_a: String,
-        chain_b: String,
-        channel_id: String,
+        chain_a: impl Into<String>,
+        chain_b: impl Into<String>,
+        channel_id: impl Into<String>,
     ) -> &mut Self {
-        self.ccv_channel_ids.insert((chain_a, chain_b), channel_id);
+        self.ccv_channel_ids
+            .insert((chain_a.into(), chain_b.into()), channel_id.into());
 
         self
     }
 
     /// Sets the connection ID map to the specified map.
-    pub fn with_connection_ids(&mut self, ids: HashMap<(String, String), String>) -> &mut Self {
-        self.connection_ids = ids;
+    pub fn connection_ids(
+        &mut self,
+        ids: impl Into<HashMap<(String, String), String>>,
+    ) -> &mut Self {
+        self.connection_ids = ids.into();
 
         self
     }
 
     /// Inserts a given connection ID for a chain pair into the builder.
-    pub fn with_connection_id(
+    pub fn connection_id(
         &mut self,
-        chain_a: String,
-        chain_b: String,
-        channel_id: String,
+        chain_a: impl Into<String>,
+        chain_b: impl Into<String>,
+        channel_id: impl Into<String>,
     ) -> &mut Self {
-        self.connection_ids.insert((chain_a, chain_b), channel_id);
+        self.connection_ids
+            .insert((chain_a.into(), chain_b.into()), channel_id.into());
 
         self
     }
 
     /// Sets the IBC denom map to the specified map.
-    pub fn with_ibc_denoms(&mut self, denoms: HashMap<(String, String), String>) -> &mut Self {
-        self.ibc_denoms = denoms;
+    pub fn ibc_denoms(
+        &mut self,
+        denoms: impl Into<HashMap<(String, String), String>>,
+    ) -> &mut Self {
+        self.ibc_denoms = denoms.into();
 
         self
     }
 
     /// Inserts a given connection ID for a chain pair into the builder.
-    pub fn with_ibc_denom(&mut self, chain_a: String, chain_b: String, denom: String) -> &mut Self {
-        self.ibc_denoms.insert((chain_a, chain_b), denom);
+    pub fn ibc_denom(
+        &mut self,
+        chain_a: impl Into<String>,
+        chain_b: impl Into<String>,
+        denom: impl Into<String>,
+    ) -> &mut Self {
+        self.ibc_denoms
+            .insert((chain_a.into(), chain_b.into()), denom.into());
+
+        self
+    }
+
+    /// Sets the artifacts dir to the specified directory.
+    pub fn artifacts_dir(&mut self, dir: impl Into<String>) -> &mut Self {
+        self.artifacts_dir = Some(dir.into());
 
         self
     }
 
     /// Builds a TestContext from the specified options.
-    pub fn finish(self) -> Result<TestContext, BuildError> {
+    pub fn build(&self) -> Result<TestContext, BuildError> {
         let TestContextBuilder {
             chains,
             transfer_channel_ids,
@@ -132,16 +160,33 @@ impl TestContextBuilder {
             connection_ids,
             ibc_denoms,
             api_url,
+            artifacts_dir,
         } = self;
 
+        // Upload contract artifacts
+        /// Deploys all neutron contracts to the test context.
+
+        fn config_chain_to_local_chain(
+            c: ConfigChain,
+            api_url: String,
+        ) -> Result<LocalChain, BuildError> {
+            let rb = ChainRequestBuilder::new(api_url.to_owned(), c.chain_id.clone(), c.debugging)?;
+
+            let relayer = Relayer::new(&rb);
+            let channels = relayer.get_channels(&rb.chain_id)?;
+
+            Ok(LocalChain::new(rb, c.admin_addr, c.denom, channels))
+        }
+
         let chains_res: Result<HashMap<String, LocalChain>, BuildError> = chains
+            .clone()
             .into_iter()
             .map(|builder| {
-                builder.finish(
+                config_chain_to_local_chain(
+                    builder,
                     api_url
                         .clone()
-                        .ok_or(BuildError::MissingField(String::from("api_url")))?
-                        .as_str(),
+                        .ok_or(BuildError::MissingField(String::from("api_url")))?,
                 )
             })
             .fold(Ok(HashMap::new()), |acc, x| {
@@ -154,57 +199,39 @@ impl TestContextBuilder {
             });
         let chains = chains_res?;
 
-        Ok(TestContext::new(
+        Ok(TestContext {
             chains,
-            transfer_channel_ids,
-            ccv_channel_ids,
-            connection_ids,
-            ibc_denoms,
-        ))
+            transfer_channel_ids: transfer_channel_ids.clone(),
+            ccv_channel_ids: ccv_channel_ids.clone(),
+            connection_ids: connection_ids.clone(),
+            ibc_denoms: ibc_denoms.clone(),
+            artifacts_dir: artifacts_dir
+                .clone()
+                .ok_or(BuildError::MissingField(String::from("artifacts_dir")))?,
+            auctions_manager: None,
+        })
     }
 }
 
 pub struct TestContext {
-    chains: HashMap<String, LocalChain>,
+    pub chains: HashMap<String, LocalChain>,
     // maps (src_chain_id, dest_chain_id) to transfer channel id
-    transfer_channel_ids: HashMap<(String, String), String>,
+    pub transfer_channel_ids: HashMap<(String, String), String>,
     // maps (src_chain_id, dest_chain_id) to ccv channel id
-    ccv_channel_ids: HashMap<(String, String), String>,
+    pub ccv_channel_ids: HashMap<(String, String), String>,
     // maps (src_chain_id, dest_chain_id) to connection id
-    connection_ids: HashMap<(String, String), String>,
+    pub connection_ids: HashMap<(String, String), String>,
     // maps (src_chain_id, dest_chain_id) to src chain native
     // denom -> ibc denom on dest chain
-    ibc_denoms: HashMap<(String, String), String>,
+    pub ibc_denoms: HashMap<(String, String), String>,
+    /// The path to .wasm contract artifacts
+    pub artifacts_dir: String,
+
+    /// Valence deployment info
+    pub auctions_manager: Option<DeployedContractInfo>,
 }
 
-#[derive(Default)]
-pub struct LocalChainBuilder {
-    admin_addr: Option<String>,
-    chain: Option<ConfigChain>,
-}
-
-impl LocalChainBuilder {
-    pub fn finish(self, api_url: &str) -> Result<LocalChain, BuildError> {
-        let chain = self
-            .chain
-            .ok_or(BuildError::MissingField(String::from("chain")))?;
-
-        let rb =
-            ChainRequestBuilder::new(api_url.to_owned(), chain.chain_id.clone(), chain.debugging)?;
-
-        let relayer = Relayer::new(&rb);
-        let channels = relayer.get_channels(&rb.chain_id)?;
-
-        Ok(LocalChain::new(
-            rb,
-            self.admin_addr
-                .ok_or(BuildError::MissingField(String::from("admin_addr")))?,
-            chain.denom,
-            channels,
-        ))
-    }
-}
-
+#[derive(Debug)]
 pub struct LocalChain {
     /// ChainRequestBuilder
     pub rb: ChainRequestBuilder,
@@ -216,6 +243,8 @@ pub struct LocalChain {
     pub connection_ids: HashMap<String, String>,
     pub admin_addr: String,
     pub native_denom: String,
+    /// contract addresses for deployed instances of contracts
+    pub contract_addrs: HashMap<String, Vec<String>>,
 }
 
 impl LocalChain {
@@ -232,6 +261,7 @@ impl LocalChain {
             connection_ids: Default::default(),
             admin_addr,
             native_denom,
+            contract_addrs: Default::default(),
         }
     }
 
@@ -246,22 +276,6 @@ impl LocalChain {
 }
 
 impl TestContext {
-    pub fn new(
-        chains: HashMap<String, LocalChain>,
-        transfer_channel_ids: HashMap<(String, String), String>,
-        ccv_channel_ids: HashMap<(String, String), String>,
-        connection_ids: HashMap<(String, String), String>,
-        ibc_denoms: HashMap<(String, String), String>,
-    ) -> Self {
-        Self {
-            chains,
-            transfer_channel_ids,
-            ccv_channel_ids,
-            connection_ids,
-            ibc_denoms,
-        }
-    }
-
     pub fn get_transfer_channels(&self) -> TestContextQuery {
         TestContextQuery::new(self, QueryType::TransferChannel)
     }
