@@ -147,5 +147,28 @@ fn main() -> Result<(), Box<dyn Error>> {
         .and_then(|data| data.get("asset_infos"))
         .is_some());
 
+    ctx.tx_fund_auction(
+        "acc0",
+        (
+            "untrn",
+            ctx.get_tokenfactory_denom(
+                "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
+                "amoguscoin",
+            ),
+        ),
+        10000,
+    )?;
+
+    ctx.tx_start_auction(
+        "acc0",
+        (
+            "untrn",
+            ctx.get_tokenfactory_denom(
+                "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
+                "amoguscoin",
+            ),
+        ),
+    )?;
+
     Ok(())
 }
