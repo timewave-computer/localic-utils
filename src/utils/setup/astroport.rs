@@ -10,7 +10,7 @@ use super::super::{
 
 impl TestContext {
     /// Instantiates the token registry.
-    pub fn create_token_registry(&mut self, key: &str, owner_addr: &str) -> Result<(), Error> {
+    pub fn tx_create_token_registry(&mut self, key: &str, owner_addr: &str) -> Result<(), Error> {
         let mut contract_a = self.get_contract(TOKEN_REGISTRY_NAME)?;
         let code_id = contract_a
             .code_id
@@ -56,7 +56,7 @@ impl TestContext {
 
     /// Instantiates the astroport factory.
     /// Note: by default, all pair types are enabled
-    pub fn create_factory(&mut self, key: &str, factory_owner: &str) -> Result<(), Error> {
+    pub fn tx_create_factory(&mut self, key: &str, factory_owner: &str) -> Result<(), Error> {
         let neutron = self.get_chain(NEUTRON_CHAIN_ID);
 
         let pair_xyk_code_id =
@@ -147,7 +147,7 @@ impl TestContext {
     }
 
     /// Creates a pool with the specififed denoms.
-    pub fn create_pool(
+    pub fn tx_create_pool(
         &self,
         key: &str,
         pair_type: PairType,

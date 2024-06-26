@@ -108,9 +108,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         ),
     ))?;
 
-    ctx.create_token_registry("acc0", "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")?;
-    ctx.create_factory("acc0", "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")?;
-    ctx.create_pool(
+    ctx.tx_create_token_registry("acc0", "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")?;
+    ctx.tx_create_factory("acc0", "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")?;
+    ctx.tx_create_pool(
         "acc0",
         PairType::Xyk {},
         "untrn",
@@ -120,7 +120,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         )
         .as_str(),
     )?;
-    ctx.create_pool(
+    ctx.tx_create_pool(
         "acc0",
         PairType::Xyk {},
         "untrn",
