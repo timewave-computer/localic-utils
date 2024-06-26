@@ -1,5 +1,8 @@
 use super::{
-    super::{error::Error, AUCTION_CONTRACT_NAME, FACTORY_NAME, NEUTRON_CHAIN_ID},
+    super::{
+        error::Error, AUCTION_CONTRACT_NAME, FACTORY_NAME, NEUTRON_CHAIN_ID, PAIR_NAME,
+        STABLE_PAIR_NAME,
+    },
     test_context::TestContext,
 };
 use localic_std::modules::cosmwasm::CosmWasm;
@@ -109,5 +112,70 @@ impl TestContext {
                 )
             })
             .collect::<Vec<_>>())
+    }
+
+    /// Gets a previously deployed astroport pair.
+    pub fn get_astroport_pool(
+        &self,
+        denom_a: impl AsRef<str>,
+        denom_b: impl AsRef<str>,
+    ) -> Result<CosmWasm, Error> {
+        let factories = self.get_astroport_factory()?;
+        let factory = factories
+            .get(0)
+            .ok_or(Error::MissingContextVariable(String::from(FACTORY_NAME)))?;
+
+        let pair_info = factory.query_value(&serde_json::json!(
+            {
+                "pair": {
+                    "asset_infos": [
+                        {
+                            "native_token": {
+                                "denom": denom_a.as_ref(),
+                            }
+                        },
+                        {
+                            "native_token": {
+                                "denom": denom_b.as_ref(),
+                            }
+                        }
+                    ]
+                }
+            }
+        ));
+
+        println!("{:?}", pair_info);
+
+        let addr = pair_info
+            .get("data")
+            .and_then(|data| data.get("contract_addr"))
+            .and_then(|addr| addr.as_str())
+            .ok_or(Error::ContainerCmd(String::from("wasm query pair factory")))?;
+        let kind = pair_info
+            .get("data")
+            .and_then(|data| data.get("pair_type"))
+            .ok_or(Error::ContainerCmd(String::from("wasm query pair factory")))?;
+
+        let neutron = self.get_chain(NEUTRON_CHAIN_ID);
+
+        if kind.get("xyk").is_some() {
+            let contract = self.get_contract(PAIR_NAME)?;
+
+            return Ok(CosmWasm::new_from_existing(
+                &neutron.rb,
+                contract.file_path,
+                contract.code_id,
+                Some(addr.to_owned()),
+            ));
+        }
+
+        let contract = self.get_contract(STABLE_PAIR_NAME)?;
+
+        Ok(CosmWasm::new_from_existing(
+            &neutron.rb,
+            contract.file_path,
+            contract.code_id,
+            Some(addr.to_owned()),
+        ))
     }
 }

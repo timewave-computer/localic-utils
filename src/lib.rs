@@ -23,3 +23,6 @@ pub const AUCTIONS_MANAGER_CONTRACT_NAME: &str = "auctions_manager";
 pub const TOKEN_REGISTRY_NAME: &str = "astroport_native_coin_registry";
 pub const FACTORY_NAME: &str = "astroport_factory";
 pub const PAIR_NAME: &str = "astroport_pair";
+pub const STABLE_PAIR_NAME: &str = "astroport_pair_stable";
+pub const TOKEN_NAME: &str = "cw20_base";
+pub const WHITELIST_NAME: &str = "astroport_whitelist";

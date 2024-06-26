@@ -42,6 +42,7 @@ pub struct MinAmount {
 */
 
 #[derive(Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum PairType {
     Xyk {},
     Stable {},

@@ -131,5 +131,21 @@ fn main() -> Result<(), Box<dyn Error>> {
         .as_str(),
     )?;
 
+    let pool = ctx.get_astroport_pool(
+        "untrn",
+        ctx.get_tokenfactory_denom(
+            "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
+            "amoguscoin",
+        ),
+    )?;
+
+    assert!(pool
+        .query_value(&serde_json::json!({
+            "pair": {}
+        }))
+        .get("data")
+        .and_then(|data| data.get("asset_infos"))
+        .is_some());
+
     Ok(())
 }
