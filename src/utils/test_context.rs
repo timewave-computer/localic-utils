@@ -209,6 +209,8 @@ impl TestContextBuilder {
                 .clone()
                 .ok_or(BuildError::MissingField(String::from("artifacts_dir")))?,
             auctions_manager: None,
+            astroport_token_registry: None,
+            astroport_factory: None,
         })
     }
 }
@@ -229,6 +231,10 @@ pub struct TestContext {
 
     /// Valence deployment info
     pub auctions_manager: Option<DeployedContractInfo>,
+
+    /// Astroport deployment info
+    pub astroport_token_registry: Option<DeployedContractInfo>,
+    pub astroport_factory: Option<DeployedContractInfo>,
 }
 
 #[derive(Debug)]

@@ -20,3 +20,6 @@ pub const NEUTRON_CHAIN_ID: &str = "localneutron-1";
 /// File names
 pub const AUCTION_CONTRACT_NAME: &str = "auction";
 pub const AUCTIONS_MANAGER_CONTRACT_NAME: &str = "auctions_manager";
+pub const TOKEN_REGISTRY_NAME: &str = "astroport_native_coin_registry";
+pub const FACTORY_NAME: &str = "astroport_factory";
+pub const PAIR_NAME: &str = "astroport_pair";

@@ -9,6 +9,10 @@ pub struct DeployedContractInfo {
     pub artifact_path: PathBuf,
 }
 
+/*
+    Valence contract bindings
+*/
+
 #[derive(Serialize)]
 pub struct AuctionStrategy {
     pub start_price_perc: u64,
@@ -31,4 +35,14 @@ pub struct ChainHaltConfig {
 pub struct MinAmount {
     pub send: String,
     pub start_auction: String,
+}
+
+/*
+    Astroport contract bindings
+*/
+
+#[derive(Serialize)]
+pub enum PairType {
+    Xyk {},
+    Stable {},
 }

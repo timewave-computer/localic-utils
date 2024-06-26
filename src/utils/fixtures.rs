@@ -1,5 +1,5 @@
 use super::{
-    super::{error::Error, AUCTION_CONTRACT_NAME, NEUTRON_CHAIN_ID},
+    super::{error::Error, AUCTION_CONTRACT_NAME, FACTORY_NAME, NEUTRON_CHAIN_ID},
     test_context::TestContext,
 };
 use localic_std::modules::cosmwasm::CosmWasm;
@@ -73,5 +73,41 @@ impl TestContext {
 
     pub fn get_tokenfactory_denom(&self, creator_addr: &str, subdenom: &str) -> String {
         format!("factory/{creator_addr}/{subdenom}")
+    }
+
+    /// Gets the deployed atroport factory for Neutron.
+    pub fn get_astroport_factory(&self) -> Result<Vec<CosmWasm>, Error> {
+        let neutron = self.get_chain(NEUTRON_CHAIN_ID);
+
+        let code_id =
+            neutron
+                .contract_codes
+                .get(FACTORY_NAME)
+                .ok_or(Error::MissingContextVariable(format!(
+                    "contract_codes::{FACTORY_NAME}",
+                )))?;
+        let contract_addrs =
+            neutron
+                .contract_addrs
+                .get(FACTORY_NAME)
+                .ok_or(Error::MissingContextVariable(format!(
+                    "contract_addrs::{FACTORY_NAME}",
+                )))?;
+
+        let artifacts_path = self.artifacts_dir.as_str();
+
+        Ok(contract_addrs
+            .into_iter()
+            .map(|addr| {
+                CosmWasm::new_from_existing(
+                    &neutron.rb,
+                    Some(PathBuf::from(format!(
+                        "{artifacts_path}/{FACTORY_NAME}.wasm"
+                    ))),
+                    Some(*code_id),
+                    Some(addr.clone()),
+                )
+            })
+            .collect::<Vec<_>>())
     }
 }

@@ -1,5 +1,7 @@
 use localic_utils::{
-    types::contract::{AuctionStrategy, ChainHaltConfig, MinAmount, PriceFreshnessStrategy},
+    types::contract::{
+        AuctionStrategy, ChainHaltConfig, MinAmount, PairType, PriceFreshnessStrategy,
+    },
     ConfigChainBuilder, TestContextBuilder,
 };
 use std::error::Error;
@@ -105,6 +107,29 @@ fn main() -> Result<(), Box<dyn Error>> {
             "amoguscoin",
         ),
     ))?;
+
+    ctx.create_token_registry("acc0", "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")?;
+    ctx.create_factory("acc0", "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")?;
+    ctx.create_pool(
+        "acc0",
+        PairType::Xyk {},
+        "untrn",
+        ctx.get_tokenfactory_denom(
+            "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
+            "amoguscoin",
+        )
+        .as_str(),
+    )?;
+    ctx.create_pool(
+        "acc0",
+        PairType::Xyk {},
+        "untrn",
+        ctx.get_tokenfactory_denom(
+            "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
+            "bruhtoken",
+        )
+        .as_str(),
+    )?;
 
     Ok(())
 }
