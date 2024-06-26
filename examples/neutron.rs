@@ -170,5 +170,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         ),
     )?;
 
+    ctx.tx_fund_pool(
+        "acc0",
+        "untrn",
+        ctx.get_tokenfactory_denom(
+            "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
+            "amoguscoin",
+        )
+        .as_ref(),
+        1000,
+        1000,
+        "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
+    )?;
+
     Ok(())
 }

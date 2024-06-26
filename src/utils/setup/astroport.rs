@@ -212,4 +212,53 @@ impl TestContext {
 
         Ok(())
     }
+
+    /// Provides liquidity for a specific pool.
+    pub fn tx_fund_pool(
+        &mut self,
+        key: &str,
+        denom_a: &str,
+        denom_b: &str,
+        amt_denom_a: u128,
+        amt_denom_b: u128,
+        liq_token_receiver: &str,
+    ) -> Result<(), Error> {
+        // Get the instance from the address
+        let pool = self.get_astroport_pool(denom_a, denom_b)?;
+
+        // Provide liquidity
+        pool.execute(
+            key,
+            serde_json::json!({
+                "provide_liquidity": {
+                    "assets": [
+                        {
+                            "info": {
+                                "native_token": {
+                                    "denom": denom_a,
+                                },
+                            },
+                            "amount": amt_denom_a.to_string(),
+                        },
+                        {
+                            "info": {
+                                "native_token": {
+                                    "denom": denom_b,
+                                },
+                            },
+                            "amount": amt_denom_b.to_string(),
+                        },
+                    ],
+                    "slippage_tolerance": "0.01",
+                    "auto_stake": false,
+                    "receiver": liq_token_receiver,
+                }
+            })
+            .to_string()
+            .as_str(),
+            "",
+        )?;
+
+        Ok(())
+    }
 }
