@@ -1,7 +1,6 @@
+use astroport::factory::PairType;
 use localic_utils::{
-    types::contract::{
-        AuctionStrategy, ChainHaltConfig, MinAmount, PairType, PriceFreshnessStrategy,
-    },
+    types::contract::{AuctionStrategy, ChainHaltConfig, MinAmount, PriceFreshnessStrategy},
     ConfigChainBuilder, TestContextBuilder,
 };
 use std::error::Error;
@@ -176,8 +175,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         ctx.get_tokenfactory_denom(
             "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
             "amoguscoin",
-        )
-        .as_ref(),
+        ),
         1000,
         1000,
         "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
