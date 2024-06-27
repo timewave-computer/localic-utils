@@ -60,7 +60,7 @@ pub struct CreateAuctionTxBuilder<'a> {
     chain_halt_config: ChainHaltConfig,
     price_freshness_strategy: PriceFreshnessStrategy,
     label: &'a str,
-    amount_denom_a: Option<u128>,
+    amount_offer_asset: Option<u128>,
     test_ctx: &'a mut TestContext,
 }
 
@@ -110,8 +110,8 @@ impl<'a> CreateAuctionTxBuilder<'a> {
         self
     }
 
-    pub fn with_amount_denom_a(&mut self, amount_denom_a: u128) -> &mut Self {
-        self.amount_denom_a = Some(amount_denom_a);
+    pub fn with_amount_offer_asset(&mut self, amount_offer_asset: u128) -> &mut Self {
+        self.amount_offer_asset = Some(amount_offer_asset);
 
         self
     }
@@ -130,8 +130,101 @@ impl<'a> CreateAuctionTxBuilder<'a> {
             self.chain_halt_config.clone(),
             self.price_freshness_strategy.clone(),
             self.label,
-            self.amount_denom_a
-                .ok_or(Error::MissingBuilderParam(String::from("amount_denom_a")))?,
+            self.amount_offer_asset
+                .ok_or(Error::MissingBuilderParam(String::from(
+                    "amount_offer_asset",
+                )))?,
+        )
+    }
+}
+
+pub struct FundAuctionTxBuilder<'a> {
+    key: &'a str,
+    offer_asset: Option<&'a str>,
+    ask_asset: Option<&'a str>,
+    amt_offer_asset: Option<u128>,
+    test_ctx: &'a mut TestContext,
+}
+
+impl<'a> FundAuctionTxBuilder<'a> {
+    pub fn with_key(&mut self, key: &'a str) -> &mut Self {
+        self.key = key;
+
+        self
+    }
+
+    pub fn with_offer_asset(&mut self, asset: &'a str) -> &mut Self {
+        self.offer_asset = Some(asset);
+
+        self
+    }
+
+    pub fn with_ask_asset(&mut self, asset: &'a str) -> &mut Self {
+        self.ask_asset = Some(asset);
+
+        self
+    }
+
+    pub fn with_amount_offer_asset(&mut self, amount_offer_asset: u128) -> &mut Self {
+        self.amt_offer_asset = Some(amount_offer_asset);
+
+        self
+    }
+
+    /// Sends the transaction.
+    pub fn send(&mut self) -> Result<(), Error> {
+        self.test_ctx.tx_fund_auction(
+            self.key,
+            (
+                self.offer_asset
+                    .ok_or(Error::MissingBuilderParam(String::from("pair")))?,
+                self.ask_asset
+                    .ok_or(Error::MissingBuilderParam(String::from("pair")))?,
+            ),
+            self.amt_offer_asset
+                .ok_or(Error::MissingBuilderParam(String::from(
+                    "amount_offer_asset",
+                )))?,
+        )
+    }
+}
+
+pub struct StartAuctionTxBuilder<'a> {
+    key: &'a str,
+    offer_asset: Option<&'a str>,
+    ask_asset: Option<&'a str>,
+    test_ctx: &'a mut TestContext,
+}
+
+impl<'a> StartAuctionTxBuilder<'a> {
+    pub fn with_key(&mut self, key: &'a str) -> &mut Self {
+        self.key = key;
+
+        self
+    }
+
+    pub fn with_offer_asset(&mut self, asset: &'a str) -> &mut Self {
+        self.offer_asset = Some(asset);
+
+        self
+    }
+
+    pub fn with_ask_asset(&mut self, asset: &'a str) -> &mut Self {
+        self.ask_asset = Some(asset);
+
+        self
+    }
+
+    /// Sends the transaction.
+    pub fn send(&mut self) -> Result<(), Error> {
+        self.test_ctx.tx_start_auction(
+            self.key,
+            (
+                self.offer_asset
+                    .ok_or(Error::MissingBuilderParam(String::from("pair")))?,
+                self.ask_asset
+                    .ok_or(Error::MissingBuilderParam(String::from("pair")))?,
+            ),
         )
     }
 }
@@ -219,7 +312,7 @@ impl TestContext {
                 multipliers: vec![("2".into(), "2".into()), ("1".into(), "1.5".into())],
             },
             label: DEFAULT_AUCTION_LABEL,
-            amount_denom_a: Default::default(),
+            amount_offer_asset: Default::default(),
             test_ctx: self,
         }
     }
@@ -270,11 +363,22 @@ impl TestContext {
     }
 
     /// Sends the specified amount of funds to an auction.
-    pub fn tx_fund_auction<TDenomA: AsRef<str>, TDenomB: AsRef<str>>(
+    pub fn build_tx_fund_auction(&mut self) -> FundAuctionTxBuilder {
+        FundAuctionTxBuilder {
+            key: DEFAULT_KEY,
+            offer_asset: Default::default(),
+            ask_asset: Default::default(),
+            amt_offer_asset: Default::default(),
+            test_ctx: self,
+        }
+    }
+
+    /// Sends the specified amount of funds to an auction.
+    fn tx_fund_auction<TDenomA: AsRef<str>, TDenomB: AsRef<str>>(
         &mut self,
         sender_key: &str,
         pair: (TDenomA, TDenomB),
-        amt_denom_a: u128,
+        amt_offer_asset: u128,
     ) -> Result<(), Error> {
         let manager = self.get_auctions_manager()?;
 
@@ -289,14 +393,24 @@ impl TestContext {
             })
             .to_string()
             .as_str(),
-            format!("--amount {amt_denom_a}{denom_a}").as_str(),
+            format!("--amount {amt_offer_asset}{denom_a}").as_str(),
         )?;
 
         Ok(())
     }
 
+    /// Builds a transaction to start the auction.
+    pub fn build_tx_start_auction(&mut self) -> StartAuctionTxBuilder {
+        StartAuctionTxBuilder {
+            key: DEFAULT_KEY,
+            offer_asset: Default::default(),
+            ask_asset: Default::default(),
+            test_ctx: self,
+        }
+    }
+
     /// Starts the specified auction.
-    pub fn tx_start_auction<TDenomA: AsRef<str>, TDenomB: AsRef<str>>(
+    fn tx_start_auction<TDenomA: AsRef<str>, TDenomB: AsRef<str>>(
         &mut self,
         sender_key: &str,
         pair: (TDenomA, TDenomB),

@@ -1,4 +1,3 @@
-use astroport::factory::PairType;
 use localic_utils::{types::contract::MinAmount, ConfigChainBuilder, TestContextBuilder};
 use std::error::Error;
 
@@ -47,12 +46,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     ctx.build_tx_create_auction()
         .with_offer_asset("untrn")
         .with_ask_asset(bruhtoken.as_str())
-        .with_amount_denom_a(10000)
+        .with_amount_offer_asset(10000)
         .send()?;
     ctx.build_tx_create_auction()
         .with_offer_asset("untrn")
         .with_ask_asset(amoguscoin.as_str())
-        .with_amount_denom_a(10000)
+        .with_amount_offer_asset(10000)
         .send()?;
 
     ctx.get_auction((
@@ -73,27 +72,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     ctx.build_tx_create_token_registry()
         .with_owner("neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")
         .send()?;
-    ctx.tx_create_factory("acc0", "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")?;
-    ctx.tx_create_pool(
-        "acc0",
-        PairType::Xyk {},
-        "untrn",
-        ctx.get_tokenfactory_denom(
-            "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
-            "amoguscoin",
-        )
-        .as_str(),
-    )?;
-    ctx.tx_create_pool(
-        "acc0",
-        PairType::Xyk {},
-        "untrn",
-        ctx.get_tokenfactory_denom(
-            "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
-            "bruhtoken",
-        )
-        .as_str(),
-    )?;
+    ctx.build_tx_create_factory()
+        .with_owner("neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")
+        .send()?;
+    ctx.build_tx_create_pool()
+        .with_denom_a("untrn")
+        .with_denom_b(amoguscoin.clone())
+        .send()?;
+    ctx.build_tx_create_pool()
+        .with_denom_a("untrn")
+        .with_denom_b(bruhtoken)
+        .send()?;
 
     let pool = ctx.get_astroport_pool(
         "untrn",
@@ -111,40 +100,24 @@ fn main() -> Result<(), Box<dyn Error>> {
         .and_then(|data| data.get("asset_infos"))
         .is_some());
 
-    ctx.tx_fund_auction(
-        "acc0",
-        (
-            "untrn",
-            ctx.get_tokenfactory_denom(
-                "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
-                "amoguscoin",
-            ),
-        ),
-        10000,
-    )?;
+    ctx.build_tx_fund_auction()
+        .with_offer_asset("untrn")
+        .with_ask_asset(amoguscoin.as_str())
+        .with_amount_offer_asset(10000)
+        .send()?;
 
-    ctx.tx_start_auction(
-        "acc0",
-        (
-            "untrn",
-            ctx.get_tokenfactory_denom(
-                "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
-                "amoguscoin",
-            ),
-        ),
-    )?;
+    ctx.build_tx_start_auction()
+        .with_offer_asset("untrn")
+        .with_ask_asset(amoguscoin.as_str())
+        .send()?;
 
-    ctx.tx_fund_pool(
-        "acc0",
-        "untrn",
-        ctx.get_tokenfactory_denom(
-            "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
-            "amoguscoin",
-        ),
-        1000,
-        1000,
-        "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
-    )?;
+    ctx.build_tx_fund_pool()
+        .with_denom_a("untrn")
+        .with_denom_b(amoguscoin)
+        .with_amount_denom_a(1000)
+        .with_amount_denom_b(1000)
+        .with_liq_token_receiver("neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")
+        .send()?;
 
     Ok(())
 }

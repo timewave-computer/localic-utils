@@ -1,8 +1,8 @@
 use super::super::{
     super::{
         error::Error, types::contract::DeployedContractInfo, DEFAULT_KEY, FACTORY_NAME,
-        NEUTRON_CHAIN_ID, PAIR_NAME, STABLE_PAIR_NAME, TOKEN_NAME, TOKEN_REGISTRY_NAME,
-        WHITELIST_NAME,
+        NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_ID, PAIR_NAME, STABLE_PAIR_NAME, TOKEN_NAME,
+        TOKEN_REGISTRY_NAME, WHITELIST_NAME,
     },
     test_context::TestContext,
 };
@@ -44,11 +44,157 @@ impl<'a> CreateTokenRegistryTxBuilder<'a> {
     }
 }
 
+/// A tx creating a token registry.
+pub struct CreatePoolTxBuilder<'a> {
+    key: &'a str,
+    pair_type: PairType,
+    denom_a: Option<String>,
+    denom_b: Option<String>,
+    test_ctx: &'a mut TestContext,
+}
+
+impl<'a> CreatePoolTxBuilder<'a> {
+    pub fn with_key(&mut self, key: &'a str) -> &mut Self {
+        self.key = key;
+
+        self
+    }
+
+    pub fn with_pairtype(&mut self, pairtype: PairType) -> &mut Self {
+        self.pair_type = pairtype;
+
+        self
+    }
+
+    pub fn with_denom_a(&mut self, denom_a: impl Into<String>) -> &mut Self {
+        self.denom_a = Some(denom_a.into());
+
+        self
+    }
+
+    pub fn with_denom_b(&mut self, denom_b: impl Into<String>) -> &mut Self {
+        self.denom_b = Some(denom_b.into());
+
+        self
+    }
+
+    /// Sends the transaction.
+    pub fn send(&mut self) -> Result<(), Error> {
+        self.test_ctx.tx_create_pool(
+            self.key,
+            self.pair_type.clone(),
+            self.denom_a
+                .clone()
+                .ok_or(Error::MissingBuilderParam(String::from("denom_a")))?,
+            self.denom_b
+                .clone()
+                .ok_or(Error::MissingBuilderParam(String::from("denom_b")))?,
+        )
+    }
+}
+
+/// A tx creating an astroport factory.
+pub struct CreateFactoryTxBuilder<'a> {
+    key: &'a str,
+    owner: String,
+    test_ctx: &'a mut TestContext,
+}
+
+impl<'a> CreateFactoryTxBuilder<'a> {
+    pub fn with_key(&mut self, key: &'a str) -> &mut Self {
+        self.key = key;
+
+        self
+    }
+
+    pub fn with_owner(&mut self, owner: impl Into<String>) -> &mut Self {
+        self.owner = owner.into();
+
+        self
+    }
+
+    /// Sends the transaction.
+    pub fn send(&mut self) -> Result<(), Error> {
+        self.test_ctx
+            .tx_create_factory(self.key, self.owner.clone())
+    }
+}
+
+/// A tx funding an astroport pool.
+pub struct FundPoolTxBuilder<'a> {
+    key: &'a str,
+    denom_a: Option<String>,
+    denom_b: Option<String>,
+    amt_denom_a: Option<u128>,
+    amt_denom_b: Option<u128>,
+    liq_token_receiver: Option<&'a str>,
+    test_ctx: &'a mut TestContext,
+}
+
+impl<'a> FundPoolTxBuilder<'a> {
+    pub fn with_key(&mut self, key: &'a str) -> &mut Self {
+        self.key = key;
+
+        self
+    }
+
+    pub fn with_denom_a(&mut self, denom_a: impl Into<String>) -> &mut Self {
+        self.denom_a = Some(denom_a.into());
+
+        self
+    }
+
+    pub fn with_denom_b(&mut self, denom_b: impl Into<String>) -> &mut Self {
+        self.denom_b = Some(denom_b.into());
+
+        self
+    }
+
+    pub fn with_amount_denom_a(&mut self, amt_denom_a: u128) -> &mut Self {
+        self.amt_denom_a = Some(amt_denom_a);
+
+        self
+    }
+
+    pub fn with_amount_denom_b(&mut self, amt_denom_b: u128) -> &mut Self {
+        self.amt_denom_b = Some(amt_denom_b);
+
+        self
+    }
+
+    pub fn with_liq_token_receiver(&mut self, receiver_addr: &'a str) -> &mut Self {
+        self.liq_token_receiver = Some(receiver_addr);
+
+        self
+    }
+
+    /// Sends the transaction.
+    pub fn send(&mut self) -> Result<(), Error> {
+        self.test_ctx.tx_fund_pool(
+            self.key,
+            self.denom_a
+                .clone()
+                .ok_or(Error::MissingBuilderParam(String::from("denom_a")))?,
+            self.denom_b
+                .clone()
+                .ok_or(Error::MissingBuilderParam(String::from("denom_b")))?,
+            self.amt_denom_a
+                .ok_or(Error::MissingBuilderParam(String::from("amt_denom_a")))?,
+            self.amt_denom_b
+                .ok_or(Error::MissingBuilderParam(String::from("amt_denom_b")))?,
+            self.liq_token_receiver
+                .ok_or(Error::MissingBuilderParam(String::from(
+                    "liq_token_receiver",
+                )))?,
+        )
+    }
+}
+
 impl TestContext {
     pub fn build_tx_create_token_registry(&mut self) -> CreateTokenRegistryTxBuilder {
         CreateTokenRegistryTxBuilder {
             key: Some(DEFAULT_KEY),
-            owner: Some(self.get_admin_addr().get()),
+            owner: Some(NEUTRON_CHAIN_ADMIN_ADDR.to_owned()),
             test_ctx: self,
         }
     }
@@ -102,8 +248,16 @@ impl TestContext {
     }
 
     /// Instantiates the astroport factory.
-    /// Note: by default, all pair types are enabled
-    pub fn tx_create_factory(
+    pub fn build_tx_create_factory(&mut self) -> CreateFactoryTxBuilder {
+        CreateFactoryTxBuilder {
+            key: DEFAULT_KEY,
+            owner: NEUTRON_CHAIN_ADMIN_ADDR.to_owned(),
+            test_ctx: self,
+        }
+    }
+
+    /// Instantiates the astroport factory.
+    fn tx_create_factory(
         &mut self,
         key: &str,
         factory_owner: impl Into<String>,
@@ -198,7 +352,18 @@ impl TestContext {
     }
 
     /// Creates a pool with the specififed denoms.
-    pub fn tx_create_pool(
+    pub fn build_tx_create_pool(&mut self) -> CreatePoolTxBuilder {
+        CreatePoolTxBuilder {
+            key: DEFAULT_KEY,
+            pair_type: PairType::Xyk {},
+            denom_a: Default::default(),
+            denom_b: Default::default(),
+            test_ctx: self,
+        }
+    }
+
+    /// Creates a pool with the specififed denoms.
+    fn tx_create_pool(
         &self,
         key: &str,
         pair_type: PairType,
@@ -259,8 +424,21 @@ impl TestContext {
         Ok(())
     }
 
-    /// Provides liquidity for a specific pool.
-    pub fn tx_fund_pool(
+    /// Provides liquidity for a specific astroport pool.
+    pub fn build_tx_fund_pool(&mut self) -> FundPoolTxBuilder {
+        FundPoolTxBuilder {
+            key: DEFAULT_KEY,
+            denom_a: Default::default(),
+            denom_b: Default::default(),
+            amt_denom_a: Default::default(),
+            amt_denom_b: Default::default(),
+            liq_token_receiver: Default::default(),
+            test_ctx: self,
+        }
+    }
+
+    /// Provides liquidity for a specific astroport pool.
+    fn tx_fund_pool(
         &mut self,
         key: &str,
         denom_a: impl Into<String> + AsRef<str>,

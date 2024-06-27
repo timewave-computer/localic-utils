@@ -25,7 +25,7 @@ impl<'a> CreateTokenFactoryTokenTxBuilder<'a> {
     }
 
     pub fn with_subdenom(&mut self, subdenom: &'a str) -> &mut Self {
-        self.chain_id = Some(subdenom);
+        self.subdenom = Some(subdenom);
 
         self
     }
@@ -38,7 +38,7 @@ impl<'a> CreateTokenFactoryTokenTxBuilder<'a> {
             self.key
                 .ok_or(Error::MissingBuilderParam(String::from("key")))?,
             self.subdenom
-                .ok_or(Error::MissingBuilderParam(String::from("chain_id")))?,
+                .ok_or(Error::MissingBuilderParam(String::from("subdenom")))?,
         )
     }
 }
