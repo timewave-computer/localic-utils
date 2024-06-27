@@ -14,8 +14,20 @@ pub const TRANSFER_PORT: &str = "transfer";
 /// File extension for WASM files
 pub const WASM_EXTENSION: &str = "wasm";
 
-/// Neutron chain ID
+/// Neutron chain info
 pub const NEUTRON_CHAIN_ID: &str = "localneutron-1";
+pub const NEUTRON_CHAIN_DENOM: &str = "untrn";
+pub const NEUTRON_CHAIN_ADMIN_ADDR: &str = "neutron1hj5fveer5cjtn4wd6wstzugjfdxzl0xpznmsky";
+
+/// Osmosis chain info
+pub const OSMOSIS_CHAIN_ID: &str = "localosmosis-1";
+pub const OSMOSIS_CHAIN_DENOM: &str = "uosmo";
+pub const OSMOSIS_CHAIN_ADMIN_ADDR: &str = "osmo1kuf2kxwuv2p8k3gnpja7mzf05zvep0cysqyf2a";
+
+/// Stride chain info
+pub const STRIDE_CHAIN_ID: &str = "localstride-1";
+pub const STRIDE_CHAIN_DENOM: &str = "ustrd";
+pub const STRIDE_CHAIN_ADMIN_ADDR: &str = "stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8";
 
 /// File names
 pub const AUCTION_CONTRACT_NAME: &str = "auction";
