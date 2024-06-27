@@ -36,14 +36,3 @@ pub struct MinAmount {
     pub send: String,
     pub start_auction: String,
 }
-
-/*
-    Astroport contract bindings
-*/
-
-#[derive(Serialize)]
-#[serde(rename_all = "lowercase")]
-pub enum PairType {
-    Xyk {},
-    Stable {},
-}

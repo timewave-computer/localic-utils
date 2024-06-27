@@ -1,16 +1,23 @@
 use super::super::{
     super::{
-        error::Error,
-        types::contract::{DeployedContractInfo, PairType},
-        FACTORY_NAME, NEUTRON_CHAIN_ID, PAIR_NAME, STABLE_PAIR_NAME, TOKEN_NAME,
-        TOKEN_REGISTRY_NAME, WHITELIST_NAME,
+        error::Error, types::contract::DeployedContractInfo, FACTORY_NAME, NEUTRON_CHAIN_ID,
+        PAIR_NAME, STABLE_PAIR_NAME, TOKEN_NAME, TOKEN_REGISTRY_NAME, WHITELIST_NAME,
     },
     test_context::TestContext,
+};
+use astroport::{
+    asset::{Asset, AssetInfo},
+    factory::{self, PairConfig, PairType},
+    native_coin_registry, pair,
 };
 
 impl TestContext {
     /// Instantiates the token registry.
-    pub fn tx_create_token_registry(&mut self, key: &str, owner_addr: &str) -> Result<(), Error> {
+    pub fn tx_create_token_registry(
+        &mut self,
+        key: &str,
+        owner_addr: impl Into<String>,
+    ) -> Result<(), Error> {
         let mut contract_a = self.get_contract(TOKEN_REGISTRY_NAME)?;
         let code_id = contract_a
             .code_id
@@ -20,10 +27,9 @@ impl TestContext {
 
         let contract = contract_a.instantiate(
             key,
-            serde_json::json!({
-                "owner": owner_addr,
-            })
-            .to_string()
+            serde_json::to_string(&native_coin_registry::InstantiateMsg {
+                owner: owner_addr.into(),
+            })?
             .as_str(),
             TOKEN_REGISTRY_NAME,
             None,
@@ -56,7 +62,11 @@ impl TestContext {
 
     /// Instantiates the astroport factory.
     /// Note: by default, all pair types are enabled
-    pub fn tx_create_factory(&mut self, key: &str, factory_owner: &str) -> Result<(), Error> {
+    pub fn tx_create_factory(
+        &mut self,
+        key: &str,
+        factory_owner: impl Into<String>,
+    ) -> Result<(), Error> {
         let neutron = self.get_chain(NEUTRON_CHAIN_ID);
 
         let pair_xyk_code_id =
@@ -100,35 +110,35 @@ impl TestContext {
 
         let contract = contract_a.instantiate(
             key,
-            serde_json::json!({
-                "pair_configs": [
-                    {
-                        "code_id": pair_xyk_code_id,
-                        "pair_type": {
-                             "xyk": {}
-                        },
-                        "total_fee_bps": 100,
-                        "maker_fee_bps": 10,
-                        "is_disabled": false,
-                        "is_generator_disabled": false
+            serde_json::to_string(&factory::InstantiateMsg {
+                pair_configs: vec![
+                    PairConfig {
+                        code_id: *pair_xyk_code_id,
+                        pair_type: PairType::Xyk {},
+                        total_fee_bps: 100,
+                        maker_fee_bps: 10,
+                        is_disabled: false,
+                        is_generator_disabled: false,
+                        permissioned: false,
                     },
-                    {
-                        "code_id": pair_stable_code_id,
-                        "pair_type": {
-                             "stable": {}
-                        },
-                        "total_fee_bps": 100,
-                        "maker_fee_bps": 10,
-                        "is_disabled": false,
-                        "is_generator_disabled": false
-                    }
+                    PairConfig {
+                        code_id: *pair_stable_code_id,
+                        pair_type: PairType::Stable {},
+                        total_fee_bps: 100,
+                        maker_fee_bps: 10,
+                        is_disabled: false,
+                        is_generator_disabled: false,
+                        permissioned: false,
+                    },
                 ],
-                "token_code_id": token_code_id,
-                "owner": factory_owner,
-                "whitelist_code_id": whitelist_code_id,
-                "coin_registry_address": native_registry_addr
-            })
-            .to_string()
+                token_code_id: *token_code_id,
+                owner: factory_owner.into(),
+                whitelist_code_id: *whitelist_code_id,
+                coin_registry_address: native_registry_addr.clone(),
+                fee_address: None,
+                generator_address: None,
+                tracker_config: None,
+            })?
             .as_str(),
             FACTORY_NAME,
             None,
@@ -151,8 +161,8 @@ impl TestContext {
         &self,
         key: &str,
         pair_type: PairType,
-        denom_a: &str,
-        denom_b: &str,
+        denom_a: impl Into<String>,
+        denom_b: impl Into<String>,
     ) -> Result<(), Error> {
         // Factory contract instance
         let contracts = self.get_astroport_factory()?;
@@ -165,23 +175,18 @@ impl TestContext {
         // Create the pair
         let tx = contract_a.execute(
             key,
-            serde_json::json!({
-            "create_pair": {
-                 "pair_type": pair_type,
-                 "asset_infos": [
-                     {
-                         "native_token": {
-                             "denom": denom_a
-                         }
-                     },
-                     {
-                         "native_token": {
-                             "denom": denom_b
-                         }
-                     }
-                 ]
-            }})
-            .to_string()
+            serde_json::to_string(&factory::ExecuteMsg::CreatePair {
+                pair_type,
+                asset_infos: vec![
+                    AssetInfo::NativeToken {
+                        denom: denom_a.into(),
+                    },
+                    AssetInfo::NativeToken {
+                        denom: denom_b.into(),
+                    },
+                ],
+                init_params: None,
+            })?
             .as_str(),
             "--gas 1000000",
         )?;
@@ -217,44 +222,38 @@ impl TestContext {
     pub fn tx_fund_pool(
         &mut self,
         key: &str,
-        denom_a: &str,
-        denom_b: &str,
+        denom_a: impl Into<String> + AsRef<str>,
+        denom_b: impl Into<String> + AsRef<str>,
         amt_denom_a: u128,
         amt_denom_b: u128,
-        liq_token_receiver: &str,
+        liq_token_receiver: impl Into<String>,
     ) -> Result<(), Error> {
         // Get the instance from the address
-        let pool = self.get_astroport_pool(denom_a, denom_b)?;
+        let pool = self.get_astroport_pool(denom_a.as_ref(), denom_b.as_ref())?;
 
         // Provide liquidity
         pool.execute(
             key,
-            serde_json::json!({
-                "provide_liquidity": {
-                    "assets": [
-                        {
-                            "info": {
-                                "native_token": {
-                                    "denom": denom_a,
-                                },
-                            },
-                            "amount": amt_denom_a.to_string(),
+            serde_json::to_string(&pair::ExecuteMsg::ProvideLiquidity {
+                assets: vec![
+                    Asset {
+                        info: AssetInfo::NativeToken {
+                            denom: denom_a.into(),
                         },
-                        {
-                            "info": {
-                                "native_token": {
-                                    "denom": denom_b,
-                                },
-                            },
-                            "amount": amt_denom_b.to_string(),
+                        amount: amt_denom_a.into(),
+                    },
+                    Asset {
+                        info: AssetInfo::NativeToken {
+                            denom: denom_b.into(),
                         },
-                    ],
-                    "slippage_tolerance": "0.01",
-                    "auto_stake": false,
-                    "receiver": liq_token_receiver,
-                }
-            })
-            .to_string()
+                        amount: amt_denom_b.into(),
+                    },
+                ],
+                slippage_tolerance: None,
+                auto_stake: None,
+                receiver: Some(liq_token_receiver.into()),
+                min_lp_to_receive: None,
+            })?
             .as_str(),
             "",
         )?;
