@@ -1,6 +1,6 @@
 use super::super::{
     types::{config::ConfigChain, contract::DeployedContractInfo},
-    TRANSFER_PORT,
+    LOCAL_IC_API_URL, TRANSFER_PORT,
 };
 use cosmwasm_std::{StdError, StdResult};
 use localic_std::{
@@ -19,7 +19,6 @@ pub enum BuildError {
 }
 
 /// A configurable builder that can be used to create a TestContext.
-#[derive(Default)]
 pub struct TestContextBuilder {
     chains: Vec<ConfigChain>,
     api_url: Option<String>,
@@ -28,6 +27,20 @@ pub struct TestContextBuilder {
     connection_ids: HashMap<(String, String), String>,
     ibc_denoms: HashMap<(String, String), String>,
     artifacts_dir: Option<String>,
+}
+
+impl Default for TestContextBuilder {
+    fn default() -> Self {
+        Self {
+            chains: Default::default(),
+            api_url: Some(LOCAL_IC_API_URL.to_owned()),
+            transfer_channel_ids: Default::default(),
+            ccv_channel_ids: Default::default(),
+            connection_ids: Default::default(),
+            ibc_denoms: Default::default(),
+            artifacts_dir: Default::default(),
+        }
+    }
 }
 
 impl TestContextBuilder {

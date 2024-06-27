@@ -38,3 +38,6 @@ pub const PAIR_NAME: &str = "astroport_pair";
 pub const STABLE_PAIR_NAME: &str = "astroport_pair_stable";
 pub const TOKEN_NAME: &str = "cw20_base";
 pub const WHITELIST_NAME: &str = "astroport_whitelist";
+
+/// Local ic info
+pub const LOCAL_IC_API_URL: &str = "http://localhost:42069/";
