@@ -2,7 +2,7 @@ use serde::Serialize;
 use std::path::PathBuf;
 
 /// A deployed CosmWasm contract with a code id, address, and artifact path.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DeployedContractInfo {
     pub code_id: u64,
     pub address: String,

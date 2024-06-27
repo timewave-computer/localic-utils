@@ -17,73 +17,47 @@ fn main() -> Result<(), Box<dyn Error>> {
         .build()?;
 
     // Upload contracts
-    ctx.tx_upload_contracts("acc0")?;
+    ctx.build_tx_upload_contracts().send()?;
 
     // Create a token in the tokenfactory
-    ctx.tx_create_tokenfactory_token("localneutron-1", "acc0", "bruhtoken")?;
-    ctx.tx_create_tokenfactory_token("localneutron-1", "acc0", "amoguscoin")?;
+    ctx.build_tx_create_tokenfactory_token()
+        .with_subdenom("bruhtoken")
+        .send()?;
+    ctx.build_tx_create_tokenfactory_token()
+        .with_subdenom("amoguscoin")
+        .send()?;
 
     // Deploy valence auctions
-    ctx.tx_create_auctions_manager(
-        "acc0",
-        [(
+    ctx.build_tx_create_auctions_manager()
+        .with_min_auction_amount([(
             String::from("untrn"),
             MinAmount {
                 send: "0".into(),
                 start_auction: "0".into(),
             },
-        )],
-        "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
-    )?;
+        )])
+        .send()?;
 
-    ctx.tx_create_auction(
-        "acc0",
-        (
+    ctx.build_tx_create_auction()
+        .with_pair((
             "untrn",
             ctx.get_tokenfactory_denom(
                 "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
                 "bruhtoken",
             ),
-        ),
-        AuctionStrategy {
-            start_price_perc: 5000,
-            end_price_perc: 5000,
-        },
-        ChainHaltConfig {
-            cap: "14400".into(),
-            block_avg: "3".into(),
-        },
-        PriceFreshnessStrategy {
-            limit: "3".into(),
-            multipliers: vec![("2".into(), "2".into()), ("1".into(), "1.5".into())],
-        },
-        "bruh_auction",
-        10000,
-    )?;
-    ctx.tx_create_auction(
-        "acc0",
-        (
+        ))
+        .with_amount_denom_a(10000)
+        .send()?;
+    ctx.build_tx_create_auction()
+        .with_pair((
             "untrn",
             ctx.get_tokenfactory_denom(
                 "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
                 "amoguscoin",
             ),
-        ),
-        AuctionStrategy {
-            start_price_perc: 5000,
-            end_price_perc: 5000,
-        },
-        ChainHaltConfig {
-            cap: "14400".into(),
-            block_avg: "3".into(),
-        },
-        PriceFreshnessStrategy {
-            limit: "3".into(),
-            multipliers: vec![("2".into(), "2".into()), ("1".into(), "1.5".into())],
-        },
-        "amogus_auction",
-        10000,
-    )?;
+        ))
+        .with_amount_denom_a(10000)
+        .send()?;
 
     ctx.get_auction((
         "untrn",
@@ -100,7 +74,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         ),
     ))?;
 
-    ctx.tx_create_token_registry("acc0", "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")?;
+    ctx.build_tx_create_token_registry()
+        .with_owner("neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")
+        .send()?;
     ctx.tx_create_factory("acc0", "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")?;
     ctx.tx_create_pool(
         "acc0",

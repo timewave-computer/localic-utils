@@ -1,7 +1,8 @@
 use super::super::{
     super::{
-        error::Error, types::contract::DeployedContractInfo, FACTORY_NAME, NEUTRON_CHAIN_ID,
-        PAIR_NAME, STABLE_PAIR_NAME, TOKEN_NAME, TOKEN_REGISTRY_NAME, WHITELIST_NAME,
+        error::Error, types::contract::DeployedContractInfo, DEFAULT_KEY, FACTORY_NAME,
+        NEUTRON_CHAIN_ID, PAIR_NAME, STABLE_PAIR_NAME, TOKEN_NAME, TOKEN_REGISTRY_NAME,
+        WHITELIST_NAME,
     },
     test_context::TestContext,
 };
@@ -11,9 +12,49 @@ use astroport::{
     native_coin_registry, pair,
 };
 
+/// A tx creating a token registry.
+pub struct CreateTokenRegistryTxBuilder<'a> {
+    key: Option<&'a str>,
+    owner: Option<String>,
+    test_ctx: &'a mut TestContext,
+}
+
+impl<'a> CreateTokenRegistryTxBuilder<'a> {
+    pub fn with_key(&mut self, key: &'a str) -> &mut Self {
+        self.key = Some(key);
+
+        self
+    }
+
+    pub fn with_owner(&mut self, owner: impl Into<String>) -> &mut Self {
+        self.owner = Some(owner.into());
+
+        self
+    }
+
+    /// Sends the transaction.
+    pub fn send(&mut self) -> Result<(), Error> {
+        self.test_ctx.tx_create_token_registry(
+            self.key
+                .ok_or(Error::MissingBuilderParam(String::from("key")))?,
+            self.owner
+                .clone()
+                .ok_or(Error::MissingBuilderParam(String::from("owner")))?,
+        )
+    }
+}
+
 impl TestContext {
+    pub fn build_tx_create_token_registry(&mut self) -> CreateTokenRegistryTxBuilder {
+        CreateTokenRegistryTxBuilder {
+            key: Some(DEFAULT_KEY),
+            owner: Some(self.get_admin_addr().get()),
+            test_ctx: self,
+        }
+    }
+
     /// Instantiates the token registry.
-    pub fn tx_create_token_registry(
+    fn tx_create_token_registry(
         &mut self,
         key: &str,
         owner_addr: impl Into<String>,

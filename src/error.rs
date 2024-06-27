@@ -18,4 +18,6 @@ pub enum Error {
     Misc(String),
     #[error("test context missing variable `{0}`")]
     MissingContextVariable(String),
+    #[error("the builder is missing a parameter `{0}`")]
+    MissingBuilderParam(String),
 }

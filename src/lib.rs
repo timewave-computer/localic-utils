@@ -41,3 +41,7 @@ pub const WHITELIST_NAME: &str = "astroport_whitelist";
 
 /// Local ic info
 pub const LOCAL_IC_API_URL: &str = "http://localhost:42069/";
+
+/// Builder defautls
+pub const DEFAULT_KEY: &str = "acc0";
+pub const DEFAULT_AUCTION_LABEL: &str = "auction";

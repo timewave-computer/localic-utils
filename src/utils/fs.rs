@@ -1,12 +1,41 @@
 use super::{
-    super::{error::Error, NEUTRON_CHAIN_ID, WASM_EXTENSION},
+    super::{error::Error, DEFAULT_KEY, NEUTRON_CHAIN_ID, WASM_EXTENSION},
     test_context::TestContext,
 };
 use localic_std::modules::cosmwasm::CosmWasm;
 use std::{ffi::OsStr, fs};
 
+/// A tx uploading contract artifacts.
+pub struct UploadContractsTxBuilder<'a> {
+    key: Option<&'a str>,
+    test_ctx: &'a mut TestContext,
+}
+
+impl<'a> UploadContractsTxBuilder<'a> {
+    pub fn with_key(&mut self, key: &'a str) -> &mut Self {
+        self.key = Some(key);
+
+        self
+    }
+
+    /// Sends the transaction.
+    pub fn send(&mut self) -> Result<(), Error> {
+        self.test_ctx.tx_upload_contracts(
+            self.key
+                .ok_or(Error::MissingBuilderParam(String::from("key")))?,
+        )
+    }
+}
+
 impl TestContext {
-    pub fn tx_upload_contracts(&mut self, key: &str) -> Result<(), Error> {
+    pub fn build_tx_upload_contracts(&mut self) -> UploadContractsTxBuilder {
+        UploadContractsTxBuilder {
+            key: Some(DEFAULT_KEY),
+            test_ctx: self,
+        }
+    }
+
+    fn tx_upload_contracts(&mut self, key: &str) -> Result<(), Error> {
         fs::read_dir(&self.artifacts_dir)?
             .filter_map(|dir_ent| dir_ent.ok())
             .filter(|dir_ent| {
