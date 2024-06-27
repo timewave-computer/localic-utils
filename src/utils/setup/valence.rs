@@ -6,7 +6,7 @@ use super::super::{
             PriceFreshnessStrategy,
         },
         AUCTIONS_MANAGER_CONTRACT_NAME, AUCTION_CONTRACT_NAME, DEFAULT_AUCTION_LABEL, DEFAULT_KEY,
-        NEUTRON_CHAIN_ID,
+        NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_ID,
     },
     test_context::TestContext,
 };
@@ -126,9 +126,9 @@ impl<'a> CreateAuctionTxBuilder<'a> {
                 self.ask_asset
                     .ok_or(Error::MissingBuilderParam(String::from("pair")))?,
             ),
-            self.auction_strategy,
-            self.chain_halt_config,
-            self.price_freshness_strategy,
+            self.auction_strategy.clone(),
+            self.chain_halt_config.clone(),
+            self.price_freshness_strategy.clone(),
             self.label,
             self.amount_denom_a
                 .ok_or(Error::MissingBuilderParam(String::from("amount_denom_a")))?,
@@ -141,7 +141,7 @@ impl TestContext {
         CreateAuctionsManagerTxBuilder {
             key: DEFAULT_KEY,
             min_auction_amount: &[],
-            server_addr: self.get_admin_addr().get().as_str(),
+            server_addr: NEUTRON_CHAIN_ADMIN_ADDR,
             test_ctx: self,
         }
     }

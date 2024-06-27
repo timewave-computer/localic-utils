@@ -13,25 +13,25 @@ pub struct DeployedContractInfo {
     Valence contract bindings
 */
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct AuctionStrategy {
     pub start_price_perc: u64,
     pub end_price_perc: u64,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct PriceFreshnessStrategy {
     pub limit: String,
     pub multipliers: Vec<(String, String)>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct ChainHaltConfig {
     pub cap: String,
     pub block_avg: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct MinAmount {
     pub send: String,
     pub start_auction: String,
