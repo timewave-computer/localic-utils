@@ -2,7 +2,7 @@ use derive_builder::Builder;
 use serde::Deserialize;
 
 #[derive(Deserialize, Default, Builder, Debug)]
-#[builder(setter(into))]
+#[builder(setter(into, prefix = "with"))]
 pub struct ChainsVec {
     pub chains: Vec<ConfigChain>,
 }
@@ -14,7 +14,7 @@ impl Into<Vec<ConfigChain>> for ChainsVec {
 }
 
 #[derive(Clone, Deserialize, Default, Builder, Debug)]
-#[builder(setter(into))]
+#[builder(setter(into, prefix = "with"))]
 pub struct ConfigChain {
     pub denom: String,
     pub debugging: bool,

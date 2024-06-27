@@ -11,17 +11,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
 
     let neutron = ConfigChainBuilder::default()
-        .admin_addr("neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")
-        .chain_id("localneutron-1")
-        .denom("untrn")
-        .debugging(true)
+        .with_admin_addr("neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")
+        .with_chain_id("localneutron-1")
+        .with_denom("untrn")
+        .with_debugging(true)
         .build()?;
 
     // Create a testcontext
     let mut ctx = TestContextBuilder::default()
-        .api_url("http://localhost:42069/")
-        .artifacts_dir("contracts")
-        .chain(neutron)
+        .with_api_url("http://localhost:42069/")
+        .with_artifacts_dir("contracts")
+        .with_chain(neutron)
         .build()?;
 
     // Upload contracts

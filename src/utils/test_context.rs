@@ -32,28 +32,28 @@ pub struct TestContextBuilder {
 
 impl TestContextBuilder {
     /// Resets the chains that this builder will create a context for to the specified value.
-    pub fn chains(&mut self, chains: impl Into<Vec<ConfigChain>>) -> &mut Self {
+    pub fn with_chains(&mut self, chains: impl Into<Vec<ConfigChain>>) -> &mut Self {
         self.chains = chains.into();
 
         self
     }
 
     /// Adds the specified chain to the context built by the builder.
-    pub fn chain(&mut self, chain: ConfigChain) -> &mut Self {
+    pub fn with_chain(&mut self, chain: ConfigChain) -> &mut Self {
         self.chains.push(chain);
 
         self
     }
 
     /// Sets the local-ic endpoint that the built context will interact with.
-    pub fn api_url(&mut self, api_url: impl Into<String>) -> &mut Self {
+    pub fn with_api_url(&mut self, api_url: impl Into<String>) -> &mut Self {
         self.api_url = Some(api_url.into());
 
         self
     }
 
     /// Sets the transfer channel ID map to the specified map.
-    pub fn transfer_channel_ids(
+    pub fn with_transfer_channel_ids(
         &mut self,
         ids: impl Into<HashMap<(String, String), String>>,
     ) -> &mut Self {
@@ -63,7 +63,7 @@ impl TestContextBuilder {
     }
 
     /// Inserts a given channel ID for a chain pair into the builder.
-    pub fn transfer_channel_id(
+    pub fn with_transfer_channel_id(
         &mut self,
         chain_a: impl Into<String>,
         chain_b: impl Into<String>,
@@ -76,7 +76,7 @@ impl TestContextBuilder {
     }
 
     /// Sets the transfer channel ID map to the specified map.
-    pub fn ccv_channel_ids(
+    pub fn with_ccv_channel_ids(
         &mut self,
         ids: impl Into<HashMap<(String, String), String>>,
     ) -> &mut Self {
@@ -86,7 +86,7 @@ impl TestContextBuilder {
     }
 
     /// Inserts a given channel ID for a chain pair into the builder.
-    pub fn ccv_channel_id(
+    pub fn with_ccv_channel_id(
         &mut self,
         chain_a: impl Into<String>,
         chain_b: impl Into<String>,
@@ -99,7 +99,7 @@ impl TestContextBuilder {
     }
 
     /// Sets the connection ID map to the specified map.
-    pub fn connection_ids(
+    pub fn with_connection_ids(
         &mut self,
         ids: impl Into<HashMap<(String, String), String>>,
     ) -> &mut Self {
@@ -109,7 +109,7 @@ impl TestContextBuilder {
     }
 
     /// Inserts a given connection ID for a chain pair into the builder.
-    pub fn connection_id(
+    pub fn with_connection_id(
         &mut self,
         chain_a: impl Into<String>,
         chain_b: impl Into<String>,
@@ -122,7 +122,7 @@ impl TestContextBuilder {
     }
 
     /// Sets the IBC denom map to the specified map.
-    pub fn ibc_denoms(
+    pub fn with_ibc_denoms(
         &mut self,
         denoms: impl Into<HashMap<(String, String), String>>,
     ) -> &mut Self {
@@ -132,7 +132,7 @@ impl TestContextBuilder {
     }
 
     /// Inserts a given connection ID for a chain pair into the builder.
-    pub fn ibc_denom(
+    pub fn with_ibc_denom(
         &mut self,
         chain_a: impl Into<String>,
         chain_b: impl Into<String>,
@@ -145,7 +145,7 @@ impl TestContextBuilder {
     }
 
     /// Sets the artifacts dir to the specified directory.
-    pub fn artifacts_dir(&mut self, dir: impl Into<String>) -> &mut Self {
+    pub fn with_artifacts_dir(&mut self, dir: impl Into<String>) -> &mut Self {
         self.artifacts_dir = Some(dir.into());
 
         self
