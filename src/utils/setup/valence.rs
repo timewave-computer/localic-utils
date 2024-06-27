@@ -54,7 +54,8 @@ impl<'a> CreateAuctionsManagerTxBuilder<'a> {
 
 pub struct CreateAuctionTxBuilder<'a> {
     key: &'a str,
-    pair: Option<(&'a str, &'a str)>,
+    offer_asset: Option<&'a str>,
+    ask_asset: Option<&'a str>,
     auction_strategy: AuctionStrategy,
     chain_halt_config: ChainHaltConfig,
     price_freshness_strategy: PriceFreshnessStrategy,
@@ -70,29 +71,35 @@ impl<'a> CreateAuctionTxBuilder<'a> {
         self
     }
 
-    pub fn with_pair(&mut self, pair: Option<(&'a str, &'a str)>) -> &mut Self {
-        self.pair = Some(pair);
+    pub fn with_offer_asset(&mut self, asset: &'a str) -> &mut Self {
+        self.offer_asset = Some(asset);
+
+        self
+    }
+
+    pub fn with_ask_asset(&mut self, asset: &'a str) -> &mut Self {
+        self.ask_asset = Some(asset);
 
         self
     }
 
     pub fn with_auction_strategy(&mut self, auction_strategy: AuctionStrategy) -> &mut Self {
-        self.auction_strategy = Some(auction_strategy);
+        self.auction_strategy = auction_strategy;
 
         self
     }
 
     pub fn with_chain_halt_config(&mut self, chain_halt_config: ChainHaltConfig) -> &mut Self {
-        self.chain_halt_config = Some(chain_halt_config);
+        self.chain_halt_config = chain_halt_config;
 
         self
     }
 
     pub fn with_price_freshness_strategy(
         &mut self,
-        price_freshness_strategy: Option<PriceFreshnessStrategy>,
+        price_freshness_strategy: PriceFreshnessStrategy,
     ) -> &mut Self {
-        self.price_freshness_strategy = Some(price_freshness_strategy);
+        self.price_freshness_strategy = price_freshness_strategy;
 
         self
     }
@@ -113,18 +120,15 @@ impl<'a> CreateAuctionTxBuilder<'a> {
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_create_auction(
             self.key,
-            self.pair
-                .ok_or(Error::MissingBuilderParam(String::from("pair")))?,
-            self.auction_strategy
-                .ok_or(Error::MissingBuilderParam(String::from("auction_strategy")))?,
-            self.chain_halt_config
-                .ok_or(Error::MissingBuilderParam(String::from(
-                    "chain_halt_config",
-                )))?,
-            self.price_freshness_strategy
-                .ok_or(Error::MissingBuilderParam(String::from(
-                    "price_freshness_strategy",
-                )))?,
+            (
+                self.offer_asset
+                    .ok_or(Error::MissingBuilderParam(String::from("pair")))?,
+                self.ask_asset
+                    .ok_or(Error::MissingBuilderParam(String::from("pair")))?,
+            ),
+            self.auction_strategy,
+            self.chain_halt_config,
+            self.price_freshness_strategy,
             self.label,
             self.amount_denom_a
                 .ok_or(Error::MissingBuilderParam(String::from("amount_denom_a")))?,
@@ -200,7 +204,8 @@ impl TestContext {
     pub fn build_tx_create_auction<'a>(&mut self) -> CreateAuctionTxBuilder {
         CreateAuctionTxBuilder {
             key: DEFAULT_KEY,
-            pair: Default::default(),
+            offer_asset: Default::default(),
+            ask_asset: Default::default(),
             auction_strategy: AuctionStrategy {
                 start_price_perc: 5000,
                 end_price_perc: 5000,

@@ -39,23 +39,25 @@ fn main() -> Result<(), Box<dyn Error>> {
         .send()?;
 
     ctx.build_tx_create_auction()
-        .with_pair((
-            "untrn",
+        .with_offer_asset("untrn")
+        .with_ask_asset(
             ctx.get_tokenfactory_denom(
                 "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
                 "bruhtoken",
-            ),
-        ))
+            )
+            .as_str(),
+        )
         .with_amount_denom_a(10000)
         .send()?;
     ctx.build_tx_create_auction()
-        .with_pair((
-            "untrn",
+        .with_offer_asset("untrn")
+        .with_ask_asset(
             ctx.get_tokenfactory_denom(
                 "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
                 "amoguscoin",
-            ),
-        ))
+            )
+            .as_str(),
+        )
         .with_amount_denom_a(10000)
         .send()?;
 
