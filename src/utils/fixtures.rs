@@ -144,8 +144,6 @@ impl TestContext {
             }
         ));
 
-        println!("{:?}", pair_info);
-
         let addr = pair_info
             .get("data")
             .and_then(|data| data.get("contract_addr"))
