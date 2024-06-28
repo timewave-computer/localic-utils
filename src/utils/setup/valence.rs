@@ -6,10 +6,11 @@ use super::super::{
             PriceFreshnessStrategy,
         },
         AUCTIONS_MANAGER_CONTRACT_NAME, AUCTION_CONTRACT_NAME, DEFAULT_AUCTION_LABEL, DEFAULT_KEY,
-        NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_ID,
+        NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_ID, PRICE_ORACLE_NAME,
     },
     test_context::TestContext,
 };
+use cosmwasm_std::Decimal;
 use localic_std::modules::cosmwasm::CosmWasm;
 use serde_json::Value;
 
@@ -238,6 +239,147 @@ impl<'a> StartAuctionTxBuilder<'a> {
     }
 }
 
+pub struct MigrateAuctionTxBuilder<'a> {
+    key: &'a str,
+    offer_asset: Option<&'a str>,
+    ask_asset: Option<&'a str>,
+    test_ctx: &'a mut TestContext,
+}
+
+impl<'a> MigrateAuctionTxBuilder<'a> {
+    pub fn with_key(&mut self, key: &'a str) -> &mut Self {
+        self.key = key;
+
+        self
+    }
+
+    pub fn with_offer_asset(&mut self, asset: &'a str) -> &mut Self {
+        self.offer_asset = Some(asset);
+
+        self
+    }
+
+    pub fn with_ask_asset(&mut self, asset: &'a str) -> &mut Self {
+        self.ask_asset = Some(asset);
+
+        self
+    }
+
+    /// Sends the transaction.
+    pub fn send(&mut self) -> Result<(), Error> {
+        self.test_ctx.tx_migrate_auction(
+            self.key,
+            (
+                self.offer_asset
+                    .ok_or(Error::MissingBuilderParam(String::from("pair")))?,
+                self.ask_asset
+                    .ok_or(Error::MissingBuilderParam(String::from("pair")))?,
+            ),
+        )
+    }
+}
+
+pub struct CreatePriceOracleTxBuilder<'a> {
+    key: &'a str,
+    seconds_allow_manual_change: u64,
+    seconds_auction_prices_fresh: u64,
+    test_ctx: &'a mut TestContext,
+}
+
+impl<'a> CreatePriceOracleTxBuilder<'a> {
+    pub fn with_key(&mut self, key: &'a str) -> &mut Self {
+        self.key = key;
+
+        self
+    }
+
+    pub fn with_seconds_allow_manual_change(&mut self, sec: u64) -> &mut Self {
+        self.seconds_allow_manual_change = sec;
+
+        self
+    }
+
+    pub fn with_seconds_auction_prices_fresh(&mut self, sec: u64) -> &mut Self {
+        self.seconds_auction_prices_fresh = sec;
+
+        self
+    }
+
+    /// Sends the transaction.
+    pub fn send(&mut self) -> Result<(), Error> {
+        self.test_ctx.tx_create_price_oracle(
+            self.key,
+            self.seconds_allow_manual_change,
+            self.seconds_auction_prices_fresh,
+        )
+    }
+}
+
+pub struct UpdateAuctionOracleTxBuilder<'a> {
+    key: &'a str,
+    test_ctx: &'a mut TestContext,
+}
+
+impl<'a> UpdateAuctionOracleTxBuilder<'a> {
+    pub fn with_key(&mut self, key: &'a str) -> &mut Self {
+        self.key = key;
+
+        self
+    }
+
+    /// Sends the transaction.
+    pub fn send(&mut self) -> Result<(), Error> {
+        self.test_ctx.tx_update_auction_oracle(self.key)
+    }
+}
+
+pub struct ManualOraclePriceUpdateTxBuilder<'a> {
+    key: &'a str,
+    offer_asset: Option<&'a str>,
+    ask_asset: Option<&'a str>,
+    price: Option<Decimal>,
+    test_ctx: &'a mut TestContext,
+}
+
+impl<'a> ManualOraclePriceUpdateTxBuilder<'a> {
+    pub fn with_key(&mut self, key: &'a str) -> &mut Self {
+        self.key = key;
+
+        self
+    }
+
+    pub fn with_offer_asset(&mut self, asset: &'a str) -> &mut Self {
+        self.offer_asset = Some(asset);
+
+        self
+    }
+
+    pub fn with_ask_asset(&mut self, asset: &'a str) -> &mut Self {
+        self.ask_asset = Some(asset);
+
+        self
+    }
+
+    pub fn with_price(&mut self, price: Decimal) -> &mut Self {
+        self.price = Some(price);
+
+        self
+    }
+
+    /// Sends the transaction.
+    pub fn send(&mut self) -> Result<(), Error> {
+        self.test_ctx.tx_manual_oracle_price_update(
+            self.key,
+            self.offer_asset
+                .ok_or(Error::MissingBuilderParam(String::from("offer_asset")))?,
+            self.ask_asset
+                .ok_or(Error::MissingBuilderParam(String::from("ask_asset")))?,
+            self.price
+                .ok_or(Error::MissingBuilderParam(String::from("price")))?,
+        )
+    }
+}
+
 impl TestContext {
     pub fn build_tx_create_auctions_manager(&mut self) -> CreateAuctionsManagerTxBuilder {
         CreateAuctionsManagerTxBuilder {
@@ -296,6 +438,57 @@ impl TestContext {
         chain
             .contract_addrs
             .entry(AUCTIONS_MANAGER_CONTRACT_NAME.to_owned())
+            .or_default()
+            .push(contract.address);
+
+        Ok(())
+    }
+
+    pub fn build_tx_create_price_oracle(&mut self) -> CreatePriceOracleTxBuilder {
+        CreatePriceOracleTxBuilder {
+            key: DEFAULT_KEY,
+            seconds_allow_manual_change: 0,
+            seconds_auction_prices_fresh: 100000000000,
+            test_ctx: self,
+        }
+    }
+
+    /// Creates an auction manager on Neutron, updating the autions manager
+    /// code id and address in the TestContext.
+    fn tx_create_price_oracle<'a>(
+        &mut self,
+        sender_key: &str,
+        seconds_allow_manual_change: u64,
+        seconds_auction_prices_fresh: u64,
+    ) -> Result<(), Error> {
+        let auctions_manager: CosmWasm = self.get_auctions_manager()?;
+        let auctions_manager_addr =
+            auctions_manager
+                .contract_addr
+                .ok_or(Error::MissingContextVariable(String::from(
+                    "contract_addresses::auctions_manager",
+                )))?;
+
+        let mut contract_a = self.get_contract(PRICE_ORACLE_NAME)?;
+        let contract = contract_a.instantiate(
+            sender_key,
+            serde_json::json!({
+                "auctions_manager_addr": auctions_manager_addr,
+                "seconds_allow_manual_change": seconds_allow_manual_change,
+                "seconds_auction_prices_fresh": seconds_auction_prices_fresh,
+            })
+            .to_string()
+            .as_str(),
+            PRICE_ORACLE_NAME,
+            None,
+            "",
+        )?;
+
+        let chain = self.get_mut_chain(NEUTRON_CHAIN_ID);
+
+        chain
+            .contract_addrs
+            .entry(PRICE_ORACLE_NAME.to_owned())
             .or_default()
             .push(contract.address);
 
@@ -367,6 +560,146 @@ impl TestContext {
             pair.1.as_ref(),
             receipt
         );
+
+        let _ = self.get_tx_events(
+            NEUTRON_CHAIN_ID,
+            receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
+        )?;
+
+        Ok(())
+    }
+
+    /// Creates an auction on Neutron. Requires that an auction manager has already been deployed.
+    pub fn build_tx_migrate_auction<'a>(&mut self) -> MigrateAuctionTxBuilder {
+        MigrateAuctionTxBuilder {
+            key: DEFAULT_KEY,
+            offer_asset: Default::default(),
+            ask_asset: Default::default(),
+            test_ctx: self,
+        }
+    }
+
+    /// Creates an auction on Neutron. Requires that an auction manager has already been deployed.
+    fn tx_migrate_auction<'a, TDenomA: AsRef<str>, TDenomB: AsRef<str>>(
+        &mut self,
+        sender_key: &str,
+        pair: (TDenomA, TDenomB),
+    ) -> Result<(), Error> {
+        // The auctions manager for this deployment
+        let contract_a = self.get_auctions_manager()?;
+        let code_id = self.get_contract(AUCTION_CONTRACT_NAME)?.code_id.ok_or(
+            Error::MissingContextVariable(String::from("code_ids::auction")),
+        )?;
+
+        let receipt = contract_a.execute(
+            sender_key,
+            serde_json::json!(
+            {
+                "admin": {
+                    "migrate_auction": {
+                        "pair": (pair.0.as_ref(), pair.1.as_ref()),
+                        "code_id": code_id,
+                        "msg": {
+                            "no_state_change": {}
+                        },
+                    },
+            }})
+            .to_string()
+            .as_str(),
+            format!("--gas 2000000").as_str(),
+        )?;
+
+        log::debug!(
+            "submitted tx migrating auction ({}, {}) {:?}",
+            pair.0.as_ref(),
+            pair.1.as_ref(),
+            receipt
+        );
+
+        let _ = self.get_tx_events(
+            NEUTRON_CHAIN_ID,
+            receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
+        )?;
+
+        Ok(())
+    }
+
+    /// Creates a builder setting the oracle address on the auctions manager on neutron.
+    pub fn build_tx_update_auction_oracle(&mut self) -> UpdateAuctionOracleTxBuilder {
+        UpdateAuctionOracleTxBuilder {
+            key: DEFAULT_KEY,
+            test_ctx: self,
+        }
+    }
+
+    fn tx_update_auction_oracle(&mut self, sender_key: &str) -> Result<(), Error> {
+        // The auctions manager for this deployment
+        let contract_a = self.get_auctions_manager()?;
+        let neutron = self.get_chain(NEUTRON_CHAIN_ID);
+        let oracle = neutron
+            .contract_addrs
+            .get(PRICE_ORACLE_NAME)
+            .and_then(|addrs| addrs.get(0))
+            .ok_or(Error::MissingContextVariable(String::from(
+                "contract_addrs::price_oracle",
+            )))?;
+
+        let receipt = contract_a.execute(
+            sender_key,
+            serde_json::json!(
+            {
+                "admin": {
+                    "update_oracle": {
+                        "oracle_addr": oracle,
+                    },
+            }})
+            .to_string()
+            .as_str(),
+            format!("--gas 2000000").as_str(),
+        )?;
+
+        let _ = self.get_tx_events(
+            NEUTRON_CHAIN_ID,
+            receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
+        )?;
+
+        Ok(())
+    }
+
+    /// Creates a builder setting the oracle address on the auctions manager on neutron.
+    pub fn build_tx_manual_oracle_price_update(&mut self) -> ManualOraclePriceUpdateTxBuilder {
+        ManualOraclePriceUpdateTxBuilder {
+            key: DEFAULT_KEY,
+            offer_asset: Default::default(),
+            ask_asset: Default::default(),
+            price: Default::default(),
+            test_ctx: self,
+        }
+    }
+
+    fn tx_manual_oracle_price_update(
+        &mut self,
+        sender_key: &str,
+        offer_asset: &str,
+        ask_asset: &str,
+        price: Decimal,
+    ) -> Result<(), Error> {
+        // The auctions manager for this deployment
+        let oracle = self.get_price_oracle()?;
+
+        let receipt = oracle.execute(
+            sender_key,
+            serde_json::json!(
+            {
+                "manual_price_update": {
+                    "pair": (offer_asset, ask_asset),
+                    "price": price,
+                }
+            })
+            .to_string()
+            .as_str(),
+            format!("--gas 2000000").as_str(),
+        )?;
 
         let _ = self.get_tx_events(
             NEUTRON_CHAIN_ID,

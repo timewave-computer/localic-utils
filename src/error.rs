@@ -20,8 +20,8 @@ pub enum Error {
     MissingContextVariable(String),
     #[error("the builder is missing a parameter `{0}`")]
     MissingBuilderParam(String),
-    #[error("the transaction failed: `{0}`")]
-    TxFailed(String),
+    #[error("the transaction {hash:?} failed: {error:?}")]
+    TxFailed { hash: String, error: String },
     #[error("the transaction has no logs")]
     TxMissingLogs,
 }

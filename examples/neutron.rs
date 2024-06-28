@@ -1,3 +1,4 @@
+use cosmwasm_std::Decimal;
 use localic_utils::{types::contract::MinAmount, ConfigChainBuilder, TestContextBuilder};
 use std::error::Error;
 
@@ -23,6 +24,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_subdenom("amoguscoin")
         .send()?;
 
+    let bruhtoken = ctx.get_tokenfactory_denom(
+        "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
+        "bruhtoken",
+    );
+    let amoguscoin = ctx.get_tokenfactory_denom(
+        "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
+        "amoguscoin",
+    );
+
     // Deploy valence auctions
     ctx.build_tx_create_auctions_manager()
         .with_min_auction_amount(&[(
@@ -32,16 +42,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                 start_auction: "0".into(),
             },
         )])
+        .with_server_addr("neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")
         .send()?;
-
-    let bruhtoken = ctx.get_tokenfactory_denom(
-        "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
-        "bruhtoken",
-    );
-    let amoguscoin = ctx.get_tokenfactory_denom(
-        "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
-        "amoguscoin",
-    );
+    ctx.build_tx_create_price_oracle().send()?;
+    ctx.build_tx_manual_oracle_price_update()
+        .with_offer_asset("untrn")
+        .with_ask_asset(amoguscoin.as_str())
+        .with_price(Decimal::percent(10))
+        .send()?;
+    ctx.build_tx_update_auction_oracle().send()?;
 
     ctx.build_tx_mint_tokenfactory_token()
         .with_denom(bruhtoken.as_str())
@@ -124,8 +133,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     ctx.build_tx_fund_pool()
         .with_denom_a("untrn")
         .with_denom_b(amoguscoin)
-        .with_amount_denom_a(1000)
-        .with_amount_denom_b(1000)
+        .with_amount_denom_a(10000)
+        .with_amount_denom_b(10000)
         .with_liq_token_receiver("neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")
         .send()?;
 

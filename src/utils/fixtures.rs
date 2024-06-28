@@ -1,7 +1,7 @@
 use super::{
     super::{
         error::Error, AUCTION_CONTRACT_NAME, FACTORY_NAME, NEUTRON_CHAIN_ID, PAIR_NAME,
-        STABLE_PAIR_NAME,
+        PRICE_ORACLE_NAME, STABLE_PAIR_NAME,
     },
     test_context::TestContext,
 };
@@ -16,10 +16,25 @@ impl TestContext {
         let chain = self.get_chain(chain_id);
         let logs = chain.rb.query_tx_hash(hash);
 
+        let raw_log = logs
+            .get("raw_log")
+            .and_then(|raw_log| raw_log.as_str())
+            .ok_or(Error::TxMissingLogs)?;
+
+        if serde_json::from_str::<Value>(raw_log).is_err() {
+            return Err(Error::TxFailed {
+                hash: hash.to_owned(),
+                error: raw_log.to_owned(),
+            });
+        }
+
         let logs = logs.get("events").ok_or(Error::TxMissingLogs)?;
 
         if let Some(err) = logs.as_str() {
-            return Err(Error::TxFailed(err.to_owned()));
+            return Err(Error::TxFailed {
+                hash: hash.to_owned(),
+                error: err.to_owned(),
+            });
         }
 
         logs.as_array().cloned().ok_or(Error::TxMissingLogs)
@@ -61,6 +76,24 @@ impl TestContext {
             Some(contract_info.code_id.clone()),
             Some(contract_info.address.clone()),
         ))
+    }
+
+    /// Get a new CosmWasm instance for the existing deployed auctions manager.
+    pub fn get_price_oracle(&self) -> Result<CosmWasm, Error> {
+        let neutron = self.get_chain(NEUTRON_CHAIN_ID);
+
+        let mut contract = self.get_contract(PRICE_ORACLE_NAME)?;
+        let contract_addr = neutron
+            .contract_addrs
+            .get(PRICE_ORACLE_NAME)
+            .and_then(|addrs| addrs.get(0))
+            .cloned()
+            .ok_or(Error::MissingContextVariable(String::from(
+                "contract_addrs::price_oracle",
+            )))?;
+        contract.contract_addr = Some(contract_addr);
+
+        Ok(contract)
     }
 
     /// Gets a CosmWasm instance for an auction with a given pair.
