@@ -459,11 +459,15 @@ impl TestContext {
             serde_json::to_string(&pair::ExecuteMsg::ProvideLiquidity {
                 assets: vec![
                     Asset {
-                        info: AssetInfo::NativeToken { denom: denom_a },
+                        info: AssetInfo::NativeToken {
+                            denom: denom_a.clone(),
+                        },
                         amount: amt_denom_a.into(),
                     },
                     Asset {
-                        info: AssetInfo::NativeToken { denom: denom_b },
+                        info: AssetInfo::NativeToken {
+                            denom: denom_b.clone(),
+                        },
                         amount: amt_denom_b.into(),
                     },
                 ],
@@ -473,7 +477,7 @@ impl TestContext {
                 min_lp_to_receive: None,
             })?
             .as_str(),
-            "--amount {amt_denom_a}{denom_a},{amt_denom_b}{denom_b}",
+            &format!("--amount {amt_denom_a}{denom_a},{amt_denom_b}{denom_b}"),
         )?;
 
         Ok(())
