@@ -1,7 +1,7 @@
 use super::super::{
     super::{
         error::Error, types::contract::DeployedContractInfo, DEFAULT_KEY, FACTORY_NAME,
-        NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_ID, PAIR_NAME, STABLE_PAIR_NAME, TOKEN_NAME,
+        NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_NAME, PAIR_NAME, STABLE_PAIR_NAME, TOKEN_NAME,
         TOKEN_REGISTRY_NAME, WHITELIST_NAME,
     },
     test_context::TestContext,
@@ -230,7 +230,7 @@ impl TestContext {
                     "astroport_token_registry::artifact_path",
                 )))?;
 
-        let neutron = self.get_mut_chain(NEUTRON_CHAIN_ID);
+        let neutron = self.get_mut_chain(NEUTRON_CHAIN_NAME);
 
         neutron
             .contract_addrs
@@ -262,7 +262,7 @@ impl TestContext {
         key: &str,
         factory_owner: impl Into<String>,
     ) -> Result<(), Error> {
-        let neutron = self.get_chain(NEUTRON_CHAIN_ID);
+        let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
 
         let pair_xyk_code_id =
             neutron
@@ -340,7 +340,7 @@ impl TestContext {
             "",
         )?;
 
-        let neutron = self.get_mut_chain(NEUTRON_CHAIN_ID);
+        let neutron = self.get_mut_chain(NEUTRON_CHAIN_NAME);
 
         neutron
             .contract_addrs
@@ -400,7 +400,7 @@ impl TestContext {
             "transaction did not produce a tx hash",
         )))?;
 
-        let _ = self.get_tx_events(NEUTRON_CHAIN_ID, tx_hash.as_str())?;
+        let _ = self.get_tx_events(NEUTRON_CHAIN_NAME, tx_hash.as_str())?;
 
         Ok(())
     }
@@ -464,7 +464,7 @@ impl TestContext {
             .tx_hash
             .ok_or(Error::TxMissingLogs)?;
 
-        let _ = self.get_tx_events(NEUTRON_CHAIN_ID, tx.as_str())?;
+        let _ = self.get_tx_events(NEUTRON_CHAIN_NAME, tx.as_str())?;
 
         Ok(())
     }

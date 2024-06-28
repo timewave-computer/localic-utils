@@ -1,12 +1,12 @@
 use super::super::{
-    super::{error::Error, DEFAULT_KEY, NEUTRON_CHAIN_ID},
+    super::{error::Error, DEFAULT_KEY, NEUTRON_CHAIN_NAME},
     test_context::TestContext,
 };
 
 /// A tx creating a tokenfactory token.
 pub struct CreateTokenFactoryTokenTxBuilder<'a> {
     key: Option<&'a str>,
-    chain_id: Option<&'a str>,
+    chain_name: Option<String>,
     subdenom: Option<&'a str>,
     test_ctx: &'a mut TestContext,
 }
@@ -18,8 +18,8 @@ impl<'a> CreateTokenFactoryTokenTxBuilder<'a> {
         self
     }
 
-    pub fn with_chain_id(&mut self, chain_id: &'a str) -> &mut Self {
-        self.chain_id = Some(chain_id);
+    pub fn with_chain_name(&mut self, chain_name: impl Into<String>) -> &mut Self {
+        self.chain_name = Some(chain_name.into());
 
         self
     }
@@ -33,8 +33,9 @@ impl<'a> CreateTokenFactoryTokenTxBuilder<'a> {
     /// Sends the transaction.
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_create_tokenfactory_token(
-            self.chain_id
-                .ok_or(Error::MissingBuilderParam(String::from("chain_id")))?,
+            self.chain_name
+                .as_ref()
+                .ok_or(Error::MissingBuilderParam(String::from("chain_name")))?,
             self.key
                 .ok_or(Error::MissingBuilderParam(String::from("key")))?,
             self.subdenom
@@ -46,7 +47,7 @@ impl<'a> CreateTokenFactoryTokenTxBuilder<'a> {
 /// A tx minting a tokens from the token factory.
 pub struct MintTokenFactoryTokenTxBuilder<'a> {
     key: Option<&'a str>,
-    chain_id: Option<&'a str>,
+    chain_name: Option<String>,
     denom: Option<&'a str>,
     amount: Option<u128>,
     test_ctx: &'a mut TestContext,
@@ -59,8 +60,8 @@ impl<'a> MintTokenFactoryTokenTxBuilder<'a> {
         self
     }
 
-    pub fn with_chain_id(&mut self, chain_id: &'a str) -> &mut Self {
-        self.chain_id = Some(chain_id);
+    pub fn with_chain_name(&mut self, chain_name: impl Into<String>) -> &mut Self {
+        self.chain_name = Some(chain_name.into());
 
         self
     }
@@ -80,8 +81,9 @@ impl<'a> MintTokenFactoryTokenTxBuilder<'a> {
     /// Sends the transaction.
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_mint_tokenfactory_token(
-            self.chain_id
-                .ok_or(Error::MissingBuilderParam(String::from("chain_id")))?,
+            self.chain_name
+                .as_ref()
+                .ok_or(Error::MissingBuilderParam(String::from("chain_name")))?,
             self.key
                 .ok_or(Error::MissingBuilderParam(String::from("key")))?,
             self.denom
@@ -96,7 +98,7 @@ impl TestContext {
     pub fn build_tx_create_tokenfactory_token(&mut self) -> CreateTokenFactoryTokenTxBuilder {
         CreateTokenFactoryTokenTxBuilder {
             key: Some(DEFAULT_KEY),
-            chain_id: Some(NEUTRON_CHAIN_ID),
+            chain_name: Some(NEUTRON_CHAIN_NAME.to_owned()),
             subdenom: Default::default(),
             test_ctx: self,
         }
@@ -105,11 +107,11 @@ impl TestContext {
     /// Creates a tokenfactory token with the given subdenom on the given chain.
     pub fn tx_create_tokenfactory_token(
         &mut self,
-        chain_id: &str,
+        chain_name: &str,
         key: &str,
         subdenom: &str,
     ) -> Result<(), Error> {
-        let chain = self.get_chain(chain_id);
+        let chain = self.get_chain(chain_name);
 
         let _ = chain.rb.tx(
             format!("tx tokenfactory create-denom {subdenom} --from {key}").as_str(),
@@ -123,7 +125,7 @@ impl TestContext {
     pub fn build_tx_mint_tokenfactory_token(&mut self) -> MintTokenFactoryTokenTxBuilder {
         MintTokenFactoryTokenTxBuilder {
             key: Some(DEFAULT_KEY),
-            chain_id: Some(NEUTRON_CHAIN_ID),
+            chain_name: Some(NEUTRON_CHAIN_NAME.to_owned()),
             denom: Default::default(),
             amount: Default::default(),
             test_ctx: self,
@@ -132,12 +134,12 @@ impl TestContext {
 
     fn tx_mint_tokenfactory_token(
         &mut self,
-        chain_id: &str,
+        chain_name: &str,
         key: &str,
         denom: &str,
         amount: u128,
     ) -> Result<(), Error> {
-        let chain = self.get_chain(chain_id);
+        let chain = self.get_chain(chain_name);
 
         let _ = chain.rb.tx(
             format!("tx tokenfactory mint {amount}{denom} --from {key}").as_str(),

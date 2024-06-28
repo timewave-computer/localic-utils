@@ -15,7 +15,7 @@ pub const TRANSFER_PORT: &str = "transfer";
 pub const WASM_EXTENSION: &str = "wasm";
 
 /// Neutron chain info
-pub const NEUTRON_CHAIN_ID: &str = "localneutron-1";
+pub const NEUTRON_CHAIN_NAME: &str = "neutron";
 pub const NEUTRON_CHAIN_DENOM: &str = "untrn";
 pub const NEUTRON_CHAIN_ADMIN_ADDR: &str = "neutron1hj5fveer5cjtn4wd6wstzugjfdxzl0xpznmsky";
 
@@ -23,11 +23,13 @@ pub const NEUTRON_CHAIN_ADMIN_ADDR: &str = "neutron1hj5fveer5cjtn4wd6wstzugjfdxz
 pub const OSMOSIS_CHAIN_ID: &str = "localosmosis-1";
 pub const OSMOSIS_CHAIN_DENOM: &str = "uosmo";
 pub const OSMOSIS_CHAIN_ADMIN_ADDR: &str = "osmo1kuf2kxwuv2p8k3gnpja7mzf05zvep0cysqyf2a";
+pub const OSMOSIS_CHAIN_NAME: &str = "osmosis";
 
 /// Stride chain info
 pub const STRIDE_CHAIN_ID: &str = "localstride-1";
 pub const STRIDE_CHAIN_DENOM: &str = "ustrd";
 pub const STRIDE_CHAIN_ADMIN_ADDR: &str = "stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8";
+pub const STRIDE_CHAIN_NAME: &str = "stride";
 
 /// File names
 pub const AUCTION_CONTRACT_NAME: &str = "auction";
@@ -46,3 +48,4 @@ pub const LOCAL_IC_API_URL: &str = "http://localhost:42069/";
 /// Builder defautls
 pub const DEFAULT_KEY: &str = "acc0";
 pub const DEFAULT_AUCTION_LABEL: &str = "auction";
+pub const DEFAULT_NEUTRON_CHAIN_ID: &str = "localneutron-1";

@@ -188,7 +188,13 @@ impl TestContextBuilder {
             let relayer = Relayer::new(&rb);
             let channels = relayer.get_channels(&rb.chain_id)?;
 
-            Ok(LocalChain::new(rb, c.admin_addr, c.denom, channels))
+            Ok(LocalChain::new(
+                rb,
+                c.admin_addr,
+                c.denom,
+                channels,
+                c.chain_name,
+            ))
         }
 
         let chains_res: Result<HashMap<String, LocalChain>, BuildError> = chains
@@ -206,7 +212,7 @@ impl TestContextBuilder {
                 let x = x?;
                 let mut acc = acc?;
 
-                acc.insert(x.rb.chain_id.clone(), x);
+                acc.insert(x.chain_name.clone(), x);
 
                 Ok(acc)
             });
@@ -264,6 +270,8 @@ pub struct LocalChain {
     pub native_denom: String,
     /// contract addresses for deployed instances of contracts
     pub contract_addrs: HashMap<String, Vec<String>>,
+    /// The name of the chain
+    pub chain_name: String,
 }
 
 impl LocalChain {
@@ -272,6 +280,7 @@ impl LocalChain {
         admin_addr: String,
         native_denom: String,
         channels: Vec<Channel>,
+        chain_name: String,
     ) -> Self {
         Self {
             rb,
@@ -281,6 +290,7 @@ impl LocalChain {
             admin_addr,
             native_denom,
             contract_addrs: Default::default(),
+            chain_name,
         }
     }
 
@@ -323,12 +333,12 @@ impl TestContext {
         TestContextQuery::new(self, QueryType::RequestBuilder)
     }
 
-    pub fn get_chain(&self, chain_id: &str) -> &LocalChain {
-        self.chains.get(chain_id).unwrap()
+    pub fn get_chain(&self, chain_name: &str) -> &LocalChain {
+        self.chains.get(chain_name).unwrap()
     }
 
-    pub fn get_mut_chain(&mut self, chain_id: &str) -> &mut LocalChain {
-        self.chains.get_mut(chain_id).unwrap()
+    pub fn get_mut_chain(&mut self, chain_name: &str) -> &mut LocalChain {
+        self.chains.get_mut(chain_name).unwrap()
     }
 }
 

@@ -1,5 +1,5 @@
 use super::{
-    super::{error::Error, DEFAULT_KEY, NEUTRON_CHAIN_ID, WASM_EXTENSION},
+    super::{error::Error, DEFAULT_KEY, NEUTRON_CHAIN_NAME, WASM_EXTENSION},
     test_context::TestContext,
 };
 use localic_std::modules::cosmwasm::CosmWasm;
@@ -45,7 +45,7 @@ impl TestContext {
             .map(fs::canonicalize)
             .try_for_each(|maybe_abs_path| {
                 let path = maybe_abs_path?;
-                let neutron_local_chain = self.get_mut_chain(NEUTRON_CHAIN_ID);
+                let neutron_local_chain = self.get_mut_chain(NEUTRON_CHAIN_NAME);
 
                 let mut cw = CosmWasm::new(&neutron_local_chain.rb);
 

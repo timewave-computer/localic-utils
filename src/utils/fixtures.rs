@@ -1,6 +1,6 @@
 use super::{
     super::{
-        error::Error, AUCTION_CONTRACT_NAME, FACTORY_NAME, NEUTRON_CHAIN_ID, PAIR_NAME,
+        error::Error, AUCTION_CONTRACT_NAME, FACTORY_NAME, NEUTRON_CHAIN_NAME, PAIR_NAME,
         PRICE_ORACLE_NAME, STABLE_PAIR_NAME,
     },
     test_context::TestContext,
@@ -12,8 +12,8 @@ use std::path::PathBuf;
 impl TestContext {
     /// Gets the event log of a transaction as a JSON object,
     /// or returns an error if it does not exist.
-    pub fn get_tx_events(&self, chain_id: &str, hash: &str) -> Result<Vec<Vec<Value>>, Error> {
-        let chain = self.get_chain(chain_id);
+    pub fn get_tx_events(&self, chain_name: &str, hash: &str) -> Result<Vec<Vec<Value>>, Error> {
+        let chain = self.get_chain(chain_name);
         let logs = chain.rb.query_tx_hash(hash);
 
         let raw_log = logs
@@ -56,7 +56,7 @@ impl TestContext {
 
     /// Get a new CosmWasm instance for a contract identified by a name.
     pub fn get_contract(&self, name: &str) -> Result<CosmWasm, Error> {
-        let chain = self.get_chain(NEUTRON_CHAIN_ID);
+        let chain = self.get_chain(NEUTRON_CHAIN_NAME);
 
         let code_id = chain
             .contract_codes
@@ -75,7 +75,7 @@ impl TestContext {
 
     /// Get a new CosmWasm instance for the existing deployed auctions manager.
     pub fn get_auctions_manager(&self) -> Result<CosmWasm, Error> {
-        let neutron = self.get_chain(NEUTRON_CHAIN_ID);
+        let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
 
         let contract_info = self
             .auctions_manager
@@ -94,7 +94,7 @@ impl TestContext {
 
     /// Get a new CosmWasm instance for the existing deployed auctions manager.
     pub fn get_price_oracle(&self) -> Result<CosmWasm, Error> {
-        let neutron = self.get_chain(NEUTRON_CHAIN_ID);
+        let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
 
         let mut contract = self.get_contract(PRICE_ORACLE_NAME)?;
         let contract_addr = neutron
@@ -143,7 +143,7 @@ impl TestContext {
 
     /// Gets the deployed atroport factory for Neutron.
     pub fn get_astroport_factory(&self) -> Result<Vec<CosmWasm>, Error> {
-        let neutron = self.get_chain(NEUTRON_CHAIN_ID);
+        let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
 
         let code_id =
             neutron
@@ -217,7 +217,7 @@ impl TestContext {
             .and_then(|data| data.get("pair_type"))
             .ok_or(Error::ContainerCmd(String::from("wasm query pair factory")))?;
 
-        let neutron = self.get_chain(NEUTRON_CHAIN_ID);
+        let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
 
         if kind.get("xyk").is_some() {
             let contract = self.get_contract(PAIR_NAME)?;

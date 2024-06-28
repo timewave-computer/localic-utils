@@ -6,7 +6,7 @@ use super::super::{
             PriceFreshnessStrategy,
         },
         AUCTIONS_MANAGER_CONTRACT_NAME, AUCTION_CONTRACT_NAME, DEFAULT_AUCTION_LABEL, DEFAULT_KEY,
-        NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_ID, PRICE_ORACLE_NAME,
+        NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_NAME, PRICE_ORACLE_NAME,
     },
     test_context::TestContext,
 };
@@ -399,7 +399,7 @@ impl TestContext {
         server_addr: impl AsRef<str>,
     ) -> Result<(), Error> {
         let mut contract_a: CosmWasm = self.get_contract(AUCTIONS_MANAGER_CONTRACT_NAME)?;
-        let neutron = self.get_chain(NEUTRON_CHAIN_ID);
+        let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
 
         let auction_code_id =
             neutron
@@ -433,7 +433,7 @@ impl TestContext {
             )))?,
         });
 
-        let chain = self.get_mut_chain(NEUTRON_CHAIN_ID);
+        let chain = self.get_mut_chain(NEUTRON_CHAIN_NAME);
 
         chain
             .contract_addrs
@@ -484,7 +484,7 @@ impl TestContext {
             "",
         )?;
 
-        let chain = self.get_mut_chain(NEUTRON_CHAIN_ID);
+        let chain = self.get_mut_chain(NEUTRON_CHAIN_NAME);
 
         chain
             .contract_addrs
@@ -562,7 +562,7 @@ impl TestContext {
         );
 
         let _ = self.get_tx_events(
-            NEUTRON_CHAIN_ID,
+            NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
 
@@ -617,7 +617,7 @@ impl TestContext {
         );
 
         let _ = self.get_tx_events(
-            NEUTRON_CHAIN_ID,
+            NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
 
@@ -635,7 +635,7 @@ impl TestContext {
     fn tx_update_auction_oracle(&mut self, sender_key: &str) -> Result<(), Error> {
         // The auctions manager for this deployment
         let contract_a = self.get_auctions_manager()?;
-        let neutron = self.get_chain(NEUTRON_CHAIN_ID);
+        let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
         let oracle = neutron
             .contract_addrs
             .get(PRICE_ORACLE_NAME)
@@ -659,7 +659,7 @@ impl TestContext {
         )?;
 
         let _ = self.get_tx_events(
-            NEUTRON_CHAIN_ID,
+            NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
 
@@ -702,7 +702,7 @@ impl TestContext {
         )?;
 
         let _ = self.get_tx_events(
-            NEUTRON_CHAIN_ID,
+            NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
 
@@ -744,7 +744,7 @@ impl TestContext {
         )?;
 
         let _ = self.get_tx_events(
-            NEUTRON_CHAIN_ID,
+            NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
 
@@ -770,7 +770,7 @@ impl TestContext {
         pair: (TDenomA, TDenomB),
     ) -> Result<(), Error> {
         let manager = self.get_auctions_manager()?;
-        let neutron = self.get_chain(NEUTRON_CHAIN_ID);
+        let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
 
         let start_block_resp = neutron
             .rb
@@ -809,7 +809,7 @@ impl TestContext {
         )?;
 
         let _ = self.get_tx_events(
-            NEUTRON_CHAIN_ID,
+            NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
 
