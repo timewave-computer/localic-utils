@@ -19,8 +19,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     ctx.build_tx_create_tokenfactory_token()
         .with_subdenom("bruhtoken")
         .send()?;
+    ctx.build_tx_mint_tokenfactory_token()
+        .with_subdenom("bruhtoken")
+        .with_address("neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")
+        .with_amount(10000000000)
+        .send()?;
     ctx.build_tx_create_tokenfactory_token()
         .with_subdenom("amoguscoin")
+        .send()?;
+    ctx.build_tx_mint_tokenfactory_token()
+        .with_subdenom("amoguscoin")
+        .with_address("neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")
+        .with_amount(10000000000)
         .send()?;
 
     // Deploy valence auctions

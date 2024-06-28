@@ -3,7 +3,7 @@ use super::super::{
     test_context::TestContext,
 };
 
-/// A tx creating a token registry.
+/// A tx creating a tokenfactory token.
 pub struct CreateTokenFactoryTokenTxBuilder<'a> {
     key: Option<&'a str>,
     chain_id: Option<&'a str>,
@@ -43,6 +43,65 @@ impl<'a> CreateTokenFactoryTokenTxBuilder<'a> {
     }
 }
 
+/// A tx minting a tokens from the token factory.
+pub struct MintTokenFactoryTokenTxBuilder<'a> {
+    key: Option<&'a str>,
+    chain_id: Option<&'a str>,
+    subdenom: Option<&'a str>,
+    amount: Option<u128>,
+    addr: Option<&'a str>,
+    test_ctx: &'a mut TestContext,
+}
+
+impl<'a> MintTokenFactoryTokenTxBuilder<'a> {
+    pub fn with_key(&mut self, key: &'a str) -> &mut Self {
+        self.key = Some(key);
+
+        self
+    }
+
+    pub fn with_chain_id(&mut self, chain_id: &'a str) -> &mut Self {
+        self.chain_id = Some(chain_id);
+
+        self
+    }
+
+    pub fn with_subdenom(&mut self, subdenom: &'a str) -> &mut Self {
+        self.subdenom = Some(subdenom);
+
+        self
+    }
+
+    pub fn with_amount(&mut self, amount: u128) -> &mut Self {
+        self.amount = Some(amount);
+
+        self
+    }
+
+    pub fn with_address(&mut self, addr: &'a str) -> &mut Self {
+        self.addr = Some(addr);
+
+        self
+    }
+
+    /// Sends the transaction.
+    pub fn send(&mut self) -> Result<(), Error> {
+        self.test_ctx.tx_mint_tokenfactory_token(
+            self.chain_id
+                .ok_or(Error::MissingBuilderParam(String::from("chain_id")))?,
+            self.key
+                .ok_or(Error::MissingBuilderParam(String::from("key")))?,
+            self.subdenom
+                .ok_or(Error::MissingBuilderParam(String::from("subdenom")))?,
+            self.amount
+                .ok_or(Error::MissingBuilderParam(String::from("amount")))?,
+            self.addr
+                .ok_or(Error::MissingBuilderParam(String::from("address")))?
+                .to_owned(),
+        )
+    }
+}
+
 impl TestContext {
     pub fn build_tx_create_tokenfactory_token(&mut self) -> CreateTokenFactoryTokenTxBuilder {
         CreateTokenFactoryTokenTxBuilder {
@@ -64,6 +123,36 @@ impl TestContext {
 
         let _ = chain.rb.tx(
             format!("tx tokenfactory create-denom {subdenom} --from {key}").as_str(),
+            true,
+        )?;
+
+        Ok(())
+    }
+
+    /// Creates a builder for a tx minting a quantity of a tokenfactory token on the specified chain.
+    pub fn build_tx_mint_tokenfactory_token(&mut self) -> MintTokenFactoryTokenTxBuilder {
+        MintTokenFactoryTokenTxBuilder {
+            key: Some(DEFAULT_KEY),
+            chain_id: Some(NEUTRON_CHAIN_ID),
+            subdenom: Default::default(),
+            amount: Default::default(),
+            addr: Default::default(),
+            test_ctx: self,
+        }
+    }
+
+    fn tx_mint_tokenfactory_token(
+        &mut self,
+        chain_id: &str,
+        key: &str,
+        subdenom: &str,
+        amount: u128,
+        address: String,
+    ) -> Result<(), Error> {
+        let chain = self.get_chain(chain_id);
+
+        let _ = chain.rb.tx(
+            format!("tx tokenfactory mint {subdenom} {amount} {address} --from {key}").as_str(),
             true,
         )?;
 
