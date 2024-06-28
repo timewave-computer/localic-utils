@@ -220,7 +220,7 @@ impl TestContext {
             .as_str(),
             TOKEN_REGISTRY_NAME,
             None,
-            "",
+            "--gas 1000000",
         )?;
         let addr = contract.address;
         let artifact_path =

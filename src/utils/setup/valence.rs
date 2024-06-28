@@ -393,7 +393,7 @@ impl TestContext {
             })
             .to_string()
             .as_str(),
-            format!("--amount {amt_offer_asset}{denom_a}").as_str(),
+            format!("--amount {amt_offer_asset}{denom_a} --gas 1000000").as_str(),
         )?;
 
         Ok(())
@@ -451,7 +451,7 @@ impl TestContext {
             })
             .to_string()
             .as_str(),
-            "",
+            "--gas 1000000",
         )?;
 
         Ok(())
