@@ -135,6 +135,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_denom_b(amoguscoin)
         .with_amount_denom_a(10000)
         .with_amount_denom_b(10000)
+        .with_slippage_tolerance(Decimal::percent(50))
         .with_liq_token_receiver("neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")
         .send()?;
 

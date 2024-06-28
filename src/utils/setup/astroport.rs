@@ -11,6 +11,7 @@ use astroport::{
     factory::{self, PairConfig, PairType},
     native_coin_registry, pair,
 };
+use cosmwasm_std::Decimal;
 
 /// A tx creating a token registry.
 pub struct CreateTokenRegistryTxBuilder<'a> {
@@ -127,6 +128,7 @@ pub struct FundPoolTxBuilder<'a> {
     denom_b: Option<String>,
     amt_denom_a: Option<u128>,
     amt_denom_b: Option<u128>,
+    slippage_tolerance: Option<Decimal>,
     liq_token_receiver: Option<&'a str>,
     test_ctx: &'a mut TestContext,
 }
@@ -162,6 +164,12 @@ impl<'a> FundPoolTxBuilder<'a> {
         self
     }
 
+    pub fn with_slippage_tolerance(&mut self, slippage_tolerance: Decimal) -> &mut Self {
+        self.slippage_tolerance = Some(slippage_tolerance);
+
+        self
+    }
+
     pub fn with_liq_token_receiver(&mut self, receiver_addr: &'a str) -> &mut Self {
         self.liq_token_receiver = Some(receiver_addr);
 
@@ -182,6 +190,10 @@ impl<'a> FundPoolTxBuilder<'a> {
                 .ok_or(Error::MissingBuilderParam(String::from("amt_denom_a")))?,
             self.amt_denom_b
                 .ok_or(Error::MissingBuilderParam(String::from("amt_denom_b")))?,
+            self.slippage_tolerance
+                .ok_or(Error::MissingBuilderParam(String::from(
+                    "slippage_tolerance",
+                )))?,
             self.liq_token_receiver
                 .ok_or(Error::MissingBuilderParam(String::from(
                     "liq_token_receiver",
@@ -413,6 +425,7 @@ impl TestContext {
             denom_b: Default::default(),
             amt_denom_a: Default::default(),
             amt_denom_b: Default::default(),
+            slippage_tolerance: Default::default(),
             liq_token_receiver: Default::default(),
             test_ctx: self,
         }
@@ -426,6 +439,7 @@ impl TestContext {
         denom_b: impl Into<String> + AsRef<str>,
         amt_denom_a: u128,
         amt_denom_b: u128,
+        slippage_tolerance: Decimal,
         liq_token_receiver: impl Into<String>,
     ) -> Result<(), Error> {
         // Get the instance from the address
@@ -453,7 +467,7 @@ impl TestContext {
                             amount: amt_denom_b.into(),
                         },
                     ],
-                    slippage_tolerance: None,
+                    slippage_tolerance: Some(slippage_tolerance),
                     auto_stake: None,
                     receiver: Some(liq_token_receiver.into()),
                     min_lp_to_receive: None,
