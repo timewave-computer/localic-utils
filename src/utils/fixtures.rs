@@ -12,7 +12,7 @@ use std::path::PathBuf;
 impl TestContext {
     /// Gets the event log of a transaction as a JSON object,
     /// or returns an error if it does not exist.
-    pub fn get_tx_events(&self, chain_id: &str, hash: &str) -> Result<Vec<Value>, Error> {
+    pub fn get_tx_events(&self, chain_id: &str, hash: &str) -> Result<Vec<Vec<Value>>, Error> {
         let chain = self.get_chain(chain_id);
         let logs = chain.rb.query_tx_hash(hash);
 
@@ -21,14 +21,25 @@ impl TestContext {
             .and_then(|raw_log| raw_log.as_str())
             .ok_or(Error::TxMissingLogs)?;
 
-        if serde_json::from_str::<Value>(raw_log).is_err() {
-            return Err(Error::TxFailed {
-                hash: hash.to_owned(),
-                error: raw_log.to_owned(),
-            });
+        let logs = serde_json::from_str::<Value>(raw_log).map_err(|_| Error::TxFailed {
+            hash: hash.to_owned(),
+            error: raw_log.to_owned(),
+        })?;
+
+        // raw_log can be an array or just the event itself
+        if let Some(arr) = logs.as_array() {
+            return arr
+                .into_iter()
+                .map(|msg| {
+                    msg.get("events")
+                        .cloned()
+                        .and_then(|events| events.as_array().cloned())
+                        .ok_or(Error::TxMissingLogs)
+                })
+                .collect::<Result<Vec<Vec<Value>>, Error>>();
         }
 
-        let logs = logs.get("events").ok_or(Error::TxMissingLogs)?;
+        let events = logs.get("events").ok_or(Error::TxMissingLogs)?;
 
         if let Some(err) = logs.as_str() {
             return Err(Error::TxFailed {
@@ -37,7 +48,10 @@ impl TestContext {
             });
         }
 
-        logs.as_array().cloned().ok_or(Error::TxMissingLogs)
+        Ok(vec![events
+            .as_array()
+            .cloned()
+            .ok_or(Error::TxMissingLogs)?])
     }
 
     /// Get a new CosmWasm instance for a contract identified by a name.

@@ -400,18 +400,7 @@ impl TestContext {
             "transaction did not produce a tx hash",
         )))?;
 
-        let logs = self.get_tx_events(NEUTRON_CHAIN_ID, tx_hash.as_str())?;
-
-        let addr = logs
-            .into_iter()
-            .find(|event| {
-                event.get("type").and_then(|maybe_ty| maybe_ty.as_str()) == Some("instantiate")
-            })
-            .and_then(|mut event| event.get_mut("attributes").map(|e| e.take()))
-            .and_then(|attrs| Some(attrs.as_array()?.get(0)?.get("value")?.as_str()?.to_owned()))
-            .ok_or(Error::ContainerCmd(String::from("query create_pool logs")))?;
-
-        log::debug!("created pool: {}", addr);
+        let _ = self.get_tx_events(NEUTRON_CHAIN_ID, tx_hash.as_str())?;
 
         Ok(())
     }
