@@ -477,7 +477,7 @@ impl TestContext {
                 min_lp_to_receive: None,
             })?
             .as_str(),
-            &format!("--amount {amt_denom_a}{denom_a},{amt_denom_b}{denom_b}"),
+            &format!("--amount {amt_denom_a}{denom_a},{amt_denom_b}{denom_b} --gas 1000000"),
         )?;
 
         Ok(())
