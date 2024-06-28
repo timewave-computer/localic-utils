@@ -412,7 +412,7 @@ impl TestContext {
             "transaction did not produce a tx hash",
         )))?;
 
-        let _ = self.get_tx_events(NEUTRON_CHAIN_NAME, tx_hash.as_str())?;
+        let _ = self.guard_tx_errors(NEUTRON_CHAIN_NAME, tx_hash.as_str())?;
 
         Ok(())
     }
@@ -478,7 +478,7 @@ impl TestContext {
             .tx_hash
             .ok_or(Error::TxMissingLogs)?;
 
-        let _ = self.get_tx_events(NEUTRON_CHAIN_NAME, tx.as_str())?;
+        let _ = self.guard_tx_errors(NEUTRON_CHAIN_NAME, tx.as_str())?;
 
         Ok(())
     }

@@ -561,7 +561,7 @@ impl TestContext {
             receipt
         );
 
-        let _ = self.get_tx_events(
+        let _ = self.guard_tx_errors(
             NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
@@ -616,7 +616,7 @@ impl TestContext {
             receipt
         );
 
-        let _ = self.get_tx_events(
+        let _ = self.guard_tx_errors(
             NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
@@ -658,7 +658,7 @@ impl TestContext {
             format!("--gas 2000000").as_str(),
         )?;
 
-        let _ = self.get_tx_events(
+        let _ = self.guard_tx_errors(
             NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
@@ -701,7 +701,7 @@ impl TestContext {
             format!("--gas 2000000").as_str(),
         )?;
 
-        let _ = self.get_tx_events(
+        let _ = self.guard_tx_errors(
             NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
@@ -743,7 +743,7 @@ impl TestContext {
             format!("--amount {amt_offer_asset}{denom_a} --gas 1000000").as_str(),
         )?;
 
-        let _ = self.get_tx_events(
+        let _ = self.guard_tx_errors(
             NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
@@ -808,7 +808,7 @@ impl TestContext {
             "--gas 1000000",
         )?;
 
-        let _ = self.get_tx_events(
+        let _ = self.guard_tx_errors(
             NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;

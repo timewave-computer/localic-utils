@@ -12,7 +12,7 @@ use std::path::PathBuf;
 impl TestContext {
     /// Gets the event log of a transaction as a JSON object,
     /// or returns an error if it does not exist.
-    pub fn get_tx_events(&self, chain_name: &str, hash: &str) -> Result<Vec<Vec<Value>>, Error> {
+    pub fn guard_tx_errors(&self, chain_name: &str, hash: &str) -> Result<(), Error> {
         let chain = self.get_chain(chain_name);
         let logs = chain.rb.query_tx_hash(hash);
 
@@ -26,21 +26,6 @@ impl TestContext {
             error: raw_log.to_owned(),
         })?;
 
-        // raw_log can be an array or just the event itself
-        if let Some(arr) = logs.as_array() {
-            return arr
-                .into_iter()
-                .map(|msg| {
-                    msg.get("events")
-                        .cloned()
-                        .and_then(|events| events.as_array().cloned())
-                        .ok_or(Error::TxMissingLogs)
-                })
-                .collect::<Result<Vec<Vec<Value>>, Error>>();
-        }
-
-        let events = logs.get("events").ok_or(Error::TxMissingLogs)?;
-
         if let Some(err) = logs.as_str() {
             return Err(Error::TxFailed {
                 hash: hash.to_owned(),
@@ -48,10 +33,7 @@ impl TestContext {
             });
         }
 
-        Ok(vec![events
-            .as_array()
-            .cloned()
-            .ok_or(Error::TxMissingLogs)?])
+        Ok(())
     }
 
     /// Get a new CosmWasm instance for a contract identified by a name.
