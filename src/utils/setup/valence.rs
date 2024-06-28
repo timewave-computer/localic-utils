@@ -193,6 +193,7 @@ pub struct StartAuctionTxBuilder<'a> {
     key: &'a str,
     offer_asset: Option<&'a str>,
     ask_asset: Option<&'a str>,
+    end_block_delta: Option<u128>,
     test_ctx: &'a mut TestContext,
 }
 
@@ -215,10 +216,18 @@ impl<'a> StartAuctionTxBuilder<'a> {
         self
     }
 
+    pub fn with_end_block_delta(&mut self, delta_blocks: u128) -> &mut Self {
+        self.end_block_delta = Some(delta_blocks);
+
+        self
+    }
+
     /// Sends the transaction.
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_start_auction(
             self.key,
+            self.end_block_delta
+                .ok_or(Error::MissingBuilderParam(String::from("end_block_delta")))?,
             (
                 self.offer_asset
                     .ok_or(Error::MissingBuilderParam(String::from("pair")))?,
@@ -405,6 +414,7 @@ impl TestContext {
             key: DEFAULT_KEY,
             offer_asset: Default::default(),
             ask_asset: Default::default(),
+            end_block_delta: Default::default(),
             test_ctx: self,
         }
     }
@@ -413,6 +423,7 @@ impl TestContext {
     fn tx_start_auction<TDenomA: AsRef<str>, TDenomB: AsRef<str>>(
         &mut self,
         sender_key: &str,
+        end_blocks: u128,
         pair: (TDenomA, TDenomB),
     ) -> Result<(), Error> {
         let manager = self.get_auctions_manager()?;
@@ -444,8 +455,8 @@ impl TestContext {
                     "open_auction": {
                         "pair": (pair.0.as_ref(), pair.1.as_ref()),
                         "params": {
-                        "end_block": start_block + 1000,
-                        "start_block": start_block + 10,
+                        "end_block": start_block + end_blocks,
+                        "start_block": start_block,
                     }
                 }},
             })
