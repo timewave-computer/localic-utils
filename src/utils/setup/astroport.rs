@@ -450,21 +450,20 @@ impl TestContext {
         // Get the instance from the address
         let pool = self.get_astroport_pool(denom_a.as_ref(), denom_b.as_ref())?;
 
+        let denom_a = denom_a.into();
+        let denom_b = denom_b.into();
+
         // Provide liquidity
         pool.execute(
             key,
             serde_json::to_string(&pair::ExecuteMsg::ProvideLiquidity {
                 assets: vec![
                     Asset {
-                        info: AssetInfo::NativeToken {
-                            denom: denom_a.into(),
-                        },
+                        info: AssetInfo::NativeToken { denom: denom_a },
                         amount: amt_denom_a.into(),
                     },
                     Asset {
-                        info: AssetInfo::NativeToken {
-                            denom: denom_b.into(),
-                        },
+                        info: AssetInfo::NativeToken { denom: denom_b },
                         amount: amt_denom_b.into(),
                     },
                 ],
@@ -474,7 +473,7 @@ impl TestContext {
                 min_lp_to_receive: None,
             })?
             .as_str(),
-            "",
+            "--amount {amt_denom_a}{denom_a},{amt_denom_b}{denom_b}",
         )?;
 
         Ok(())
