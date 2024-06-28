@@ -16,8 +16,11 @@ impl TestContext {
         let chain = self.get_chain(chain_name);
         let logs = chain.rb.query_tx_hash(hash);
 
-        let raw_log = logs
-            .get("raw_log")
+        let raw_log = logs.get("raw_log");
+
+        println!("{:?}", raw_log);
+
+        let raw_log = raw_log
             .and_then(|raw_log| raw_log.as_str())
             .ok_or(Error::TxMissingLogs)?;
 
