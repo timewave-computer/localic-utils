@@ -18,8 +18,6 @@ impl TestContext {
 
         let raw_log = logs.get("raw_log");
 
-        println!("{:?}", raw_log);
-
         let raw_log = raw_log
             .and_then(|raw_log| raw_log.as_str())
             .ok_or(Error::TxMissingLogs)?;
