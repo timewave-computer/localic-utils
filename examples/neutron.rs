@@ -118,6 +118,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     ctx.build_tx_start_auction()
         .with_offer_asset("untrn")
         .with_ask_asset(amoguscoin.as_str())
+        .with_end_block_delta(1000000)
         .send()?;
 
     ctx.build_tx_fund_pool()
