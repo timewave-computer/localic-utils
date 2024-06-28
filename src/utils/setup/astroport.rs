@@ -376,8 +376,6 @@ impl TestContext {
             .get(0)
             .ok_or(Error::MissingContextVariable(String::from(FACTORY_NAME)))?;
 
-        let neutron = self.get_chain(NEUTRON_CHAIN_ID);
-
         // Create the pair
         let tx = contract_a.execute(
             key,
@@ -402,21 +400,15 @@ impl TestContext {
             "transaction did not produce a tx hash",
         )))?;
 
-        let logs = neutron.rb.query_tx_hash(tx_hash.as_str());
+        let logs = self.get_tx_events(NEUTRON_CHAIN_ID, tx_hash.as_str())?;
 
         let addr = logs
-            .get("events")
-            .and_then(|events| events.as_array())
-            .and_then(|events| {
-                events.into_iter().find(|event| {
-                    event.get("type").and_then(|maybe_ty| maybe_ty.as_str()) == Some("instantiate")
-                })
+            .into_iter()
+            .find(|event| {
+                event.get("type").and_then(|maybe_ty| maybe_ty.as_str()) == Some("instantiate")
             })
-            .and_then(|event| event.get("attributes"))
-            .and_then(|attrs| attrs.as_array())
-            .and_then(|attrs| attrs.get(0))
-            .and_then(|contract_addr_attr| contract_addr_attr.get("value"))
-            .and_then(|val| val.as_str())
+            .and_then(|mut event| event.get_mut("attributes").map(|e| e.take()))
+            .and_then(|attrs| Some(attrs.as_array()?.get(0)?.get("value")?.as_str()?.to_owned()))
             .ok_or(Error::ContainerCmd(String::from("query create_pool logs")))?;
 
         log::debug!("created pool: {}", addr);
@@ -454,31 +446,36 @@ impl TestContext {
         let denom_b = denom_b.into();
 
         // Provide liquidity
-        pool.execute(
-            key,
-            serde_json::to_string(&pair::ExecuteMsg::ProvideLiquidity {
-                assets: vec![
-                    Asset {
-                        info: AssetInfo::NativeToken {
-                            denom: denom_a.clone(),
+        let tx = pool
+            .execute(
+                key,
+                serde_json::to_string(&pair::ExecuteMsg::ProvideLiquidity {
+                    assets: vec![
+                        Asset {
+                            info: AssetInfo::NativeToken {
+                                denom: denom_a.clone(),
+                            },
+                            amount: amt_denom_a.into(),
                         },
-                        amount: amt_denom_a.into(),
-                    },
-                    Asset {
-                        info: AssetInfo::NativeToken {
-                            denom: denom_b.clone(),
+                        Asset {
+                            info: AssetInfo::NativeToken {
+                                denom: denom_b.clone(),
+                            },
+                            amount: amt_denom_b.into(),
                         },
-                        amount: amt_denom_b.into(),
-                    },
-                ],
-                slippage_tolerance: None,
-                auto_stake: None,
-                receiver: Some(liq_token_receiver.into()),
-                min_lp_to_receive: None,
-            })?
-            .as_str(),
-            &format!("--amount {amt_denom_a}{denom_a},{amt_denom_b}{denom_b} --gas 1000000"),
-        )?;
+                    ],
+                    slippage_tolerance: None,
+                    auto_stake: None,
+                    receiver: Some(liq_token_receiver.into()),
+                    min_lp_to_receive: None,
+                })?
+                .as_str(),
+                &format!("--amount {amt_denom_a}{denom_a},{amt_denom_b}{denom_b} --gas 1000000"),
+            )?
+            .tx_hash
+            .ok_or(Error::TxMissingLogs)?;
+
+        let _ = self.get_tx_events(NEUTRON_CHAIN_ID, tx.as_str())?;
 
         Ok(())
     }

@@ -368,6 +368,11 @@ impl TestContext {
             receipt
         );
 
+        let _ = self.get_tx_events(
+            NEUTRON_CHAIN_ID,
+            receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
+        )?;
+
         Ok(())
     }
 
@@ -393,7 +398,7 @@ impl TestContext {
 
         let denom_a = pair.0.as_ref();
 
-        manager.execute(
+        let receipt = manager.execute(
             sender_key,
             serde_json::json!({
                 "auction_funds": {
@@ -403,6 +408,11 @@ impl TestContext {
             .to_string()
             .as_str(),
             format!("--amount {amt_offer_asset}{denom_a} --gas 1000000").as_str(),
+        )?;
+
+        let _ = self.get_tx_events(
+            NEUTRON_CHAIN_ID,
+            receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
 
         Ok(())
@@ -448,7 +458,7 @@ impl TestContext {
             .and_then(|s| s.parse::<u128>().ok())
             .ok_or(Error::ContainerCmd(String::from("query block")))?;
 
-        manager.execute(
+        let receipt = manager.execute(
             sender_key,
             serde_json::json!({
                 "server": {
@@ -463,6 +473,11 @@ impl TestContext {
             .to_string()
             .as_str(),
             "--gas 1000000",
+        )?;
+
+        let _ = self.get_tx_events(
+            NEUTRON_CHAIN_ID,
+            receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
 
         Ok(())

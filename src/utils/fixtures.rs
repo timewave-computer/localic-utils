@@ -6,9 +6,25 @@ use super::{
     test_context::TestContext,
 };
 use localic_std::modules::cosmwasm::CosmWasm;
+use serde_json::Value;
 use std::path::PathBuf;
 
 impl TestContext {
+    /// Gets the event log of a transaction as a JSON object,
+    /// or returns an error if it does not exist.
+    pub fn get_tx_events(&self, chain_id: &str, hash: &str) -> Result<Vec<Value>, Error> {
+        let chain = self.get_chain(chain_id);
+        let logs = chain.rb.query_tx_hash(hash);
+
+        let logs = logs.get("events").ok_or(Error::TxMissingLogs)?;
+
+        if let Some(err) = logs.as_str() {
+            return Err(Error::TxFailed(err.to_owned()));
+        }
+
+        logs.as_array().cloned().ok_or(Error::TxMissingLogs)
+    }
+
     /// Get a new CosmWasm instance for a contract identified by a name.
     pub fn get_contract(&self, name: &str) -> Result<CosmWasm, Error> {
         let chain = self.get_chain(NEUTRON_CHAIN_ID);
