@@ -47,9 +47,8 @@ impl<'a> CreateTokenFactoryTokenTxBuilder<'a> {
 pub struct MintTokenFactoryTokenTxBuilder<'a> {
     key: Option<&'a str>,
     chain_id: Option<&'a str>,
-    subdenom: Option<&'a str>,
+    denom: Option<&'a str>,
     amount: Option<u128>,
-    addr: Option<&'a str>,
     test_ctx: &'a mut TestContext,
 }
 
@@ -66,20 +65,14 @@ impl<'a> MintTokenFactoryTokenTxBuilder<'a> {
         self
     }
 
-    pub fn with_subdenom(&mut self, subdenom: &'a str) -> &mut Self {
-        self.subdenom = Some(subdenom);
+    pub fn with_denom(&mut self, denom: &'a str) -> &mut Self {
+        self.denom = Some(denom);
 
         self
     }
 
     pub fn with_amount(&mut self, amount: u128) -> &mut Self {
         self.amount = Some(amount);
-
-        self
-    }
-
-    pub fn with_address(&mut self, addr: &'a str) -> &mut Self {
-        self.addr = Some(addr);
 
         self
     }
@@ -91,13 +84,10 @@ impl<'a> MintTokenFactoryTokenTxBuilder<'a> {
                 .ok_or(Error::MissingBuilderParam(String::from("chain_id")))?,
             self.key
                 .ok_or(Error::MissingBuilderParam(String::from("key")))?,
-            self.subdenom
-                .ok_or(Error::MissingBuilderParam(String::from("subdenom")))?,
+            self.denom
+                .ok_or(Error::MissingBuilderParam(String::from("denom")))?,
             self.amount
                 .ok_or(Error::MissingBuilderParam(String::from("amount")))?,
-            self.addr
-                .ok_or(Error::MissingBuilderParam(String::from("address")))?
-                .to_owned(),
         )
     }
 }
@@ -134,9 +124,8 @@ impl TestContext {
         MintTokenFactoryTokenTxBuilder {
             key: Some(DEFAULT_KEY),
             chain_id: Some(NEUTRON_CHAIN_ID),
-            subdenom: Default::default(),
+            denom: Default::default(),
             amount: Default::default(),
-            addr: Default::default(),
             test_ctx: self,
         }
     }
@@ -145,14 +134,13 @@ impl TestContext {
         &mut self,
         chain_id: &str,
         key: &str,
-        subdenom: &str,
+        denom: &str,
         amount: u128,
-        address: String,
     ) -> Result<(), Error> {
         let chain = self.get_chain(chain_id);
 
         let _ = chain.rb.tx(
-            format!("tx tokenfactory mint {subdenom} {amount} {address} --from {key}").as_str(),
+            format!("tx tokenfactory mint {amount}{denom} --from {key}").as_str(),
             true,
         )?;
 
