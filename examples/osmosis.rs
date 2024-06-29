@@ -26,6 +26,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     ctx.build_tx_create_osmo_pool()
         .with_weight("uosmo", 1)
         .with_weight(&bruhtoken, 1)
+        .with_initial_deposit("uosmo", 1)
+        .with_initial_deposit(&bruhtoken, 1)
         .send()?;
 
     Ok(())

@@ -1,8 +1,9 @@
 use super::super::{
-    super::{error::Error, DEFAULT_KEY, OSMOSIS_CHAIN_NAME},
+    super::{error::Error, DEFAULT_KEY, OSMOSIS_CHAIN_NAME, OSMOSIS_POOLFILE_PATH},
     test_context::TestContext,
 };
 use cosmwasm_std::Decimal;
+use std::{fs::OpenOptions, io::Write, path::Path};
 
 pub struct CreateOsmoPoolTxBuilder<'a> {
     key: &'a str,
@@ -52,7 +53,7 @@ impl<'a> CreateOsmoPoolTxBuilder<'a> {
     }
 
     /// Sends the transaction, returning the pool ID if it was created successfully.
-    pub fn send(&mut self) -> Result<u64, Error> {
+    pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_create_osmo_pool(
             self.key,
             self.weights.iter().cloned(),
@@ -86,7 +87,7 @@ impl TestContext {
         swap_fee: Decimal,
         exit_fee: Decimal,
         future_governor: &'a str,
-    ) -> Result<u64, Error> {
+    ) -> Result<(), Error> {
         let osmosis = self.get_chain(OSMOSIS_CHAIN_NAME);
 
         // Osmosisd requires a JSON file to specify the
@@ -100,26 +101,30 @@ impl TestContext {
         })
         .to_string();
 
+        // Copy poolfile to localosmo
+        let mut f = OpenOptions::new()
+            .create(true)
+            .truncate(true)
+            .write(true)
+            .open(OSMOSIS_POOLFILE_PATH)?;
+        f.write_all(poolfile_str.as_bytes())?;
+
+        let _ = osmosis
+            .rb
+            .upload_file(&Path::new(OSMOSIS_POOLFILE_PATH), true)?
+            .send()?
+            .text()?;
+
         let chain_id = &osmosis.rb.chain_id;
         let remote_poolfile_path = format!("/var/cosmos-chain/{chain_id}/pool_file.json");
 
-        // Write the poolfile to a file
-        let res = osmosis.rb.exec(
-            &format!("/bin/sh -c 'echo <<-END {poolfile_str} > {remote_poolfile_path}'"),
-            true,
-        );
-
-        println!("{}", res);
-
         // Create pool
-        let res = osmosis.rb.tx(
-            format!("tx poolmanager create-pool --pool-file {remote_poolfile_path} --from {key} --fees 500uosmo")
+        let _ = osmosis.rb.tx(
+            format!("tx poolmanager create-pool --pool-file {remote_poolfile_path} --from {key} --fees 2500uosmo --gas 1000000")
             .as_str(),
             true,
         )?;
 
-        println!("{}", res);
-
-        Ok(0)
+        Ok(())
     }
 }

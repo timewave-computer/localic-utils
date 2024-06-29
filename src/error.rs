@@ -1,4 +1,5 @@
 use localic_std::errors::LocalError;
+use reqwest::Error as ReqwestError;
 use serde_json::Error as SerdeJsonError;
 use std::io::Error as IoError;
 use thiserror::Error;
@@ -24,4 +25,6 @@ pub enum Error {
     TxFailed { hash: String, error: String },
     #[error("the transaction has no logs")]
     TxMissingLogs,
+    #[error("the HTTP client encountered an error: `{0}`")]
+    HttpError(#[from] ReqwestError),
 }

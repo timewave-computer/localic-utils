@@ -24,6 +24,7 @@ pub const OSMOSIS_CHAIN_ID: &str = "localosmosis-1";
 pub const OSMOSIS_CHAIN_DENOM: &str = "uosmo";
 pub const OSMOSIS_CHAIN_ADMIN_ADDR: &str = "osmo1kuf2kxwuv2p8k3gnpja7mzf05zvep0cysqyf2a";
 pub const OSMOSIS_CHAIN_NAME: &str = "osmosis";
+pub const OSMOSIS_POOLFILE_PATH: &str = "/tmp/pool_file.json";
 
 /// Stride chain info
 pub const STRIDE_CHAIN_ID: &str = "localstride-1";
