@@ -16,6 +16,8 @@ pub enum BuildError {
     MissingField(String),
     #[error("encountered a localic error: `{0}`")]
     LocalIc(#[from] LocalError),
+    #[error("cosmwasm error: `{0}`")]
+    StdError(#[from] StdError),
 }
 
 /// A configurable builder that can be used to create a TestContext.
@@ -28,6 +30,7 @@ pub struct TestContextBuilder {
     ibc_denoms: HashMap<(String, String), String>,
     artifacts_dir: Option<String>,
     unwrap_raw_logs: bool,
+    transfer_channels: Vec<(String, String)>,
 }
 
 impl Default for TestContextBuilder {
@@ -41,6 +44,7 @@ impl Default for TestContextBuilder {
             ibc_denoms: Default::default(),
             artifacts_dir: Default::default(),
             unwrap_raw_logs: Default::default(),
+            transfer_channels: Default::default(),
         }
     }
 }
@@ -86,6 +90,18 @@ impl TestContextBuilder {
     ) -> &mut Self {
         self.transfer_channel_ids
             .insert((chain_a.into(), chain_b.into()), channel_id.into());
+
+        self
+    }
+
+    /// Inserts a channel for transfer between the specified chains.
+    pub fn with_transfer_channel(
+        &mut self,
+        chain_a: impl Into<String>,
+        chain_b: impl Into<String>,
+    ) -> &mut Self {
+        self.transfer_channels
+            .push((chain_a.into(), chain_b.into()));
 
         self
     }
@@ -184,6 +200,7 @@ impl TestContextBuilder {
             api_url,
             artifacts_dir,
             unwrap_raw_logs,
+            transfer_channels,
         } = self;
 
         // Upload contract artifacts
@@ -228,9 +245,28 @@ impl TestContextBuilder {
             });
         let chains = chains_res?;
 
+        let mut transfer_channel_ids = transfer_channel_ids.clone();
+
+        for (chain_a, chain_b) in transfer_channels {
+            let chain_a_chain = chains
+                .get(chain_a)
+                .ok_or(BuildError::MissingField(String::from("chain")))?;
+            let chain_b_chain = chains
+                .get(chain_b)
+                .ok_or(BuildError::MissingField(String::from("chain")))?;
+
+            let conns = find_pairwise_transfer_channel_ids(
+                chain_a_chain.channels.as_slice(),
+                chain_b_chain.channels.as_slice(),
+            )?;
+
+            transfer_channel_ids.insert((chain_a.clone(), chain_b.clone()), conns.0.connection_id);
+            transfer_channel_ids.insert((chain_b.clone(), chain_a.clone()), conns.1.connection_id);
+        }
+
         Ok(TestContext {
             chains,
-            transfer_channel_ids: transfer_channel_ids.clone(),
+            transfer_channel_ids,
             ccv_channel_ids: ccv_channel_ids.clone(),
             connection_ids: connection_ids.clone(),
             ibc_denoms: ibc_denoms.clone(),
@@ -270,7 +306,6 @@ pub struct TestContext {
     pub unwrap_logs: bool,
 }
 
-#[derive(Debug)]
 pub struct LocalChain {
     /// ChainRequestBuilder
     pub rb: ChainRequestBuilder,
