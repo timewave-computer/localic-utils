@@ -49,3 +49,6 @@ pub const LOCAL_IC_API_URL: &str = "http://localhost:42069/";
 pub const DEFAULT_KEY: &str = "acc0";
 pub const DEFAULT_AUCTION_LABEL: &str = "auction";
 pub const DEFAULT_NEUTRON_CHAIN_ID: &str = "localneutron-1";
+
+pub const TX_HASH_QUERY_RETRIES: u16 = 5;
+pub const TX_HASH_QUERY_PAUSE_SEC: u64 = 2;

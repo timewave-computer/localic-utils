@@ -1,13 +1,13 @@
 use super::{
     super::{
         error::Error, AUCTION_CONTRACT_NAME, FACTORY_NAME, NEUTRON_CHAIN_NAME, PAIR_NAME,
-        PRICE_ORACLE_NAME, STABLE_PAIR_NAME,
+        PRICE_ORACLE_NAME, STABLE_PAIR_NAME, TX_HASH_QUERY_PAUSE_SEC, TX_HASH_QUERY_RETRIES,
     },
     test_context::TestContext,
 };
 use localic_std::modules::cosmwasm::CosmWasm;
 use serde_json::Value;
-use std::path::PathBuf;
+use std::{path::PathBuf, thread, time::Duration};
 
 impl TestContext {
     /// Gets the event log of a transaction as a JSON object,
@@ -18,11 +18,24 @@ impl TestContext {
         }
 
         let chain = self.get_chain(chain_name);
-        let logs = chain.rb.query_tx_hash(hash);
+        let mut logs = None;
 
-        let raw_log = logs.get("raw_log");
+        for _ in 0..TX_HASH_QUERY_RETRIES {
+            thread::sleep(Duration::from_secs(TX_HASH_QUERY_PAUSE_SEC));
 
-        let raw_log = raw_log
+            let mut tx_res = chain.rb.query_tx_hash(hash);
+
+            if tx_res.get("raw_log").is_none() {
+                continue;
+            }
+
+            logs = Some(tx_res["raw_log"].take());
+
+            break;
+        }
+
+        let raw_log = logs
+            .as_ref()
             .and_then(|raw_log| raw_log.as_str())
             .ok_or(Error::TxMissingLogs)?;
 

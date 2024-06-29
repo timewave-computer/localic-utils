@@ -112,9 +112,11 @@ impl TestContext {
         subdenom: &str,
     ) -> Result<(), Error> {
         let chain = self.get_chain(chain_name);
+        let fee_denom = chain.native_denom.as_str();
 
         let _ = chain.rb.tx(
-            format!("tx tokenfactory create-denom {subdenom} --from {key}").as_str(),
+            format!("tx tokenfactory create-denom {subdenom} --from {key} --fees 500{fee_denom}")
+                .as_str(),
             true,
         )?;
 
@@ -140,9 +142,11 @@ impl TestContext {
         amount: u128,
     ) -> Result<(), Error> {
         let chain = self.get_chain(chain_name);
+        let fee_denom = chain.native_denom.as_str();
 
         let _ = chain.rb.tx(
-            format!("tx tokenfactory mint {amount}{denom} --from {key}").as_str(),
+            format!("tx tokenfactory mint {amount}{denom} --from {key} --fees 500{fee_denom}")
+                .as_str(),
             true,
         )?;
 
