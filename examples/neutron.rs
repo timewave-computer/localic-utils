@@ -8,6 +8,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Create a testcontext
     let mut ctx = TestContextBuilder::default()
+        .with_unwrap_raw_logs(true)
         .with_api_url("http://localhost:42069/")
         .with_artifacts_dir("contracts")
         .with_chain(ConfigChainBuilder::default_neutron().build()?)

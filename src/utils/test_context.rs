@@ -27,6 +27,7 @@ pub struct TestContextBuilder {
     connection_ids: HashMap<(String, String), String>,
     ibc_denoms: HashMap<(String, String), String>,
     artifacts_dir: Option<String>,
+    unwrap_raw_logs: bool,
 }
 
 impl Default for TestContextBuilder {
@@ -39,6 +40,7 @@ impl Default for TestContextBuilder {
             connection_ids: Default::default(),
             ibc_denoms: Default::default(),
             artifacts_dir: Default::default(),
+            unwrap_raw_logs: Default::default(),
         }
     }
 }
@@ -164,6 +166,13 @@ impl TestContextBuilder {
         self
     }
 
+    /// Sets the artifacts dir to the specified directory.
+    pub fn with_unwrap_raw_logs(&mut self, unwrap_logs: bool) -> &mut Self {
+        self.unwrap_raw_logs = unwrap_logs;
+
+        self
+    }
+
     /// Builds a TestContext from the specified options.
     pub fn build(&self) -> Result<TestContext, BuildError> {
         let TestContextBuilder {
@@ -174,6 +183,7 @@ impl TestContextBuilder {
             ibc_denoms,
             api_url,
             artifacts_dir,
+            unwrap_raw_logs,
         } = self;
 
         // Upload contract artifacts
@@ -230,6 +240,7 @@ impl TestContextBuilder {
             auctions_manager: None,
             astroport_token_registry: None,
             astroport_factory: None,
+            unwrap_logs: *unwrap_raw_logs,
         })
     }
 }
@@ -254,6 +265,9 @@ pub struct TestContext {
     /// Astroport deployment info
     pub astroport_token_registry: Option<DeployedContractInfo>,
     pub astroport_factory: Option<DeployedContractInfo>,
+
+    /// Whether or not logs should be expected and guarded for each tx
+    pub unwrap_logs: bool,
 }
 
 #[derive(Debug)]

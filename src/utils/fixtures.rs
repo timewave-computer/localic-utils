@@ -13,6 +13,10 @@ impl TestContext {
     /// Gets the event log of a transaction as a JSON object,
     /// or returns an error if it does not exist.
     pub fn guard_tx_errors(&self, chain_name: &str, hash: &str) -> Result<(), Error> {
+        if !self.unwrap_logs {
+            return Ok(());
+        }
+
         let chain = self.get_chain(chain_name);
         let logs = chain.rb.query_tx_hash(hash);
 
