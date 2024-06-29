@@ -221,6 +221,7 @@ impl TestContextBuilder {
                 c.denom,
                 channels,
                 c.chain_name,
+                c.chain_prefix,
             ))
         }
 
@@ -321,6 +322,7 @@ pub struct LocalChain {
     pub contract_addrs: HashMap<String, Vec<String>>,
     /// The name of the chain
     pub chain_name: String,
+    pub chain_prefix: String,
 }
 
 impl LocalChain {
@@ -330,6 +332,7 @@ impl LocalChain {
         native_denom: String,
         channels: Vec<Channel>,
         chain_name: String,
+        chain_prefix: String,
     ) -> Self {
         Self {
             rb,
@@ -340,6 +343,7 @@ impl LocalChain {
             native_denom,
             contract_addrs: Default::default(),
             chain_name,
+            chain_prefix,
         }
     }
 

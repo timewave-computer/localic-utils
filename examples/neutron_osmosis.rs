@@ -26,6 +26,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         .send()?;
 
     // Transfer from osmosis to neutron and neutron to osmosis
+    ctx.build_tx_transfer()
+        .with_chain_name("neutron")
+        .with_recipient("osmo1kuf2kxwuv2p8k3gnpja7mzf05zvep0cysqyf2a")
+        .with_denom("untrn")
+        .with_amount(1000000)
+        .send()?;
 
     Ok(())
 }
