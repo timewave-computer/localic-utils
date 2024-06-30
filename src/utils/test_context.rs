@@ -261,8 +261,8 @@ impl TestContextBuilder {
                 chain_b_chain.channels.as_slice(),
             )?;
 
-            transfer_channel_ids.insert((chain_a.clone(), chain_b.clone()), conns.0.connection_id);
-            transfer_channel_ids.insert((chain_b.clone(), chain_a.clone()), conns.1.connection_id);
+            transfer_channel_ids.insert((chain_a.clone(), chain_b.clone()), conns.0.channel_id);
+            transfer_channel_ids.insert((chain_b.clone(), chain_a.clone()), conns.1.channel_id);
         }
 
         Ok(TestContext {
