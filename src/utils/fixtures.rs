@@ -1,7 +1,8 @@
 use super::{
     super::{
-        error::Error, AUCTION_CONTRACT_NAME, FACTORY_NAME, NEUTRON_CHAIN_NAME, PAIR_NAME,
-        PRICE_ORACLE_NAME, STABLE_PAIR_NAME, TX_HASH_QUERY_PAUSE_SEC, TX_HASH_QUERY_RETRIES,
+        error::Error, AUCTION_CONTRACT_NAME, FACTORY_NAME, NEUTRON_CHAIN_NAME, OSMOSIS_CHAIN_NAME,
+        PAIR_NAME, PRICE_ORACLE_NAME, STABLE_PAIR_NAME, TX_HASH_QUERY_PAUSE_SEC,
+        TX_HASH_QUERY_RETRIES,
     },
     test_context::TestContext,
 };
@@ -238,5 +239,31 @@ impl TestContext {
             contract.code_id,
             Some(addr.to_owned()),
         ))
+    }
+
+    /// Gets the id of the pool with the specifieed denoms.
+    pub fn get_osmo_pool(
+        &self,
+        denom_a: impl AsRef<str>,
+        denom_b: impl AsRef<str>,
+    ) -> Result<u64, Error> {
+        let osmosis = self.get_chain(OSMOSIS_CHAIN_NAME);
+        let denom_a_str = denom_a.as_ref();
+
+        let res = osmosis.rb.query(
+            &format!("q poolmanager list-pools-by-denom {denom_a_str}"),
+            true,
+        );
+
+        let pools_value = res.get("pools").ok_or(Error::ContainerCmd(String::from(
+            "q poolmanager list-pools-by-denom",
+        )))?;
+        let pools = res.as_array().ok_or(Error::ContainerCmd(String::from(
+            "q poolmanager list-pools-by-denom",
+        )))?;
+
+        println!("{:?}", pools);
+
+        Ok(0)
     }
 }

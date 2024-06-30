@@ -30,5 +30,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_initial_deposit(&bruhtoken, 1)
         .send()?;
 
+    // Get its id
+    ctx.get_osmo_pool("uomso", bruhtoken)?;
+
     Ok(())
 }
