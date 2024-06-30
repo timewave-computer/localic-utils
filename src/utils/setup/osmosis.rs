@@ -90,11 +90,16 @@ impl TestContext {
     ) -> Result<(), Error> {
         let osmosis = self.get_chain(OSMOSIS_CHAIN_NAME);
 
+        let amounts = initial_deposit
+            .map(|(deposit, denom)| format!("{deposit}{denom}"))
+            .collect::<Vec<_>>()
+            .join(",");
+
         // Osmosisd requires a JSON file to specify the
         // configuration of the pool being created
         let poolfile_str = serde_json::json!({
             "weights": weights.map(|(weight, denom)| format!("{weight}{denom}")).collect::<Vec<_>>().join(","),
-            "initial-deposit": initial_deposit.map(|(deposit, denom)| format!("{deposit}{denom}")).collect::<Vec<_>>().join(","),
+            "initial-deposit": amounts.clone(),
             "swap-fee": swap_fee,
             "exit-fee": exit_fee,
             "future-governor": future_governor,
@@ -120,7 +125,7 @@ impl TestContext {
 
         // Create pool
         let _ = osmosis.rb.tx(
-            format!("tx poolmanager create-pool --pool-file {remote_poolfile_path} --from {key} --fees 2500uosmo --gas 1000000")
+            format!("tx poolmanager create-pool --pool-file {remote_poolfile_path} --from {key} --fees 2500uosmo --gas 1000000 --amount {amounts}")
             .as_str(),
             true,
         )?;
