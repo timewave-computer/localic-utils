@@ -91,7 +91,6 @@ impl TestContext {
         let osmosis = self.get_chain(OSMOSIS_CHAIN_NAME);
 
         let amounts = initial_deposit
-            .clone()
             .map(|(deposit, denom)| format!("{deposit}{denom}"))
             .collect::<Vec<_>>()
             .join(",");
