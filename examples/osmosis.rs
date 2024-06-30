@@ -21,6 +21,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         .send()?;
     let bruhtoken =
         ctx.get_tokenfactory_denom("osmo1kuf2kxwuv2p8k3gnpja7mzf05zvep0cysqyf2a", "bruhtoken");
+    ctx.build_tx_mint_tokenfactory_token()
+        .with_chain_name(OSMOSIS_CHAIN_NAME)
+        .with_amount(10000000000)
+        .with_denom(&bruhtoken)
+        .with_recipient_addr("osmo1kuf2kxwuv2p8k3gnpja7mzf05zvep0cysqyf2a")
+        .send()?;
 
     // Create an osmosis pool
     ctx.build_tx_create_osmo_pool()
@@ -31,7 +37,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .send()?;
 
     // Get its id
-    ctx.get_osmo_pool("uomso", bruhtoken)?;
+    let pool_id = ctx.get_osmo_pool("uosmo", bruhtoken)?;
 
     Ok(())
 }

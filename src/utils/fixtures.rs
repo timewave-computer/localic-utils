@@ -246,24 +246,50 @@ impl TestContext {
         &self,
         denom_a: impl AsRef<str>,
         denom_b: impl AsRef<str>,
-    ) -> Result<u64, Error> {
+    ) -> Result<String, Error> {
         let osmosis = self.get_chain(OSMOSIS_CHAIN_NAME);
         let denom_a_str = denom_a.as_ref();
 
         let res = osmosis.rb.query(
-            &format!("q poolmanager list-pools-by-denom {denom_a_str}"),
+            &format!("q poolmanager list-pools-by-denom {denom_a_str} --output=json"),
             true,
         );
 
-        let pools_value = res.get("pools").ok_or(Error::ContainerCmd(String::from(
-            "q poolmanager list-pools-by-denom",
-        )))?;
-        let pools = res.as_array().ok_or(Error::ContainerCmd(String::from(
-            "q poolmanager list-pools-by-denom",
-        )))?;
+        let res_text = res
+            .get("text")
+            .and_then(|v| v.as_str())
+            .ok_or(Error::ContainerCmd(String::from(
+                "q poolmanager list-pools-by-denom",
+            )))?;
+        let res_value: Value = serde_json::from_str(res_text)?;
 
-        println!("{:?}", pools);
+        let pools_value = res_value
+            .get("pools")
+            .ok_or(Error::ContainerCmd(String::from(
+                "q poolmanager list-pools-by-denom",
+            )))?;
+        let pool = pools_value
+            .as_array()
+            .and_then(|pools| {
+                pools.iter().find(|pool_value| {
+                    pool_value
+                        .get("pool_assets")
+                        .and_then(|assets_val| {
+                            assets_val.as_array().and_then(|arr| {
+                                arr.iter().find(|asset| {
+                                    asset["token"]["denom"].as_str() == Some(denom_b.as_ref())
+                                })
+                            })
+                        })
+                        .is_some()
+                })
+            })
+            .and_then(|pool| pool.get("id"))
+            .and_then(|id_str| id_str.as_str())
+            .ok_or(Error::ContainerCmd(String::from(
+                "q poolmanager list-pools-by-denom",
+            )))?;
 
-        Ok(0)
+        Ok(pool.to_owned())
     }
 }

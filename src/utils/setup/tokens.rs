@@ -50,6 +50,7 @@ pub struct MintTokenFactoryTokenTxBuilder<'a> {
     chain_name: Option<String>,
     denom: Option<&'a str>,
     amount: Option<u128>,
+    recipient_addr: Option<&'a str>,
     test_ctx: &'a mut TestContext,
 }
 
@@ -78,6 +79,12 @@ impl<'a> MintTokenFactoryTokenTxBuilder<'a> {
         self
     }
 
+    pub fn with_recipient_addr(&mut self, addr: &'a str) -> &mut Self {
+        self.recipient_addr = Some(addr);
+
+        self
+    }
+
     /// Sends the transaction.
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_mint_tokenfactory_token(
@@ -90,6 +97,7 @@ impl<'a> MintTokenFactoryTokenTxBuilder<'a> {
                 .ok_or(Error::MissingBuilderParam(String::from("denom")))?,
             self.amount
                 .ok_or(Error::MissingBuilderParam(String::from("amount")))?,
+            self.recipient_addr.unwrap_or_default(),
         )
     }
 }
@@ -115,7 +123,7 @@ impl TestContext {
         let fee_denom = chain.native_denom.as_str();
 
         let _ = chain.rb.tx(
-            format!("tx tokenfactory create-denom {subdenom} --from {key} --fees 500{fee_denom}")
+            format!("tx tokenfactory create-denom {subdenom} --from {key} --fees 25000{fee_denom} --gas 10000000")
                 .as_str(),
             true,
         )?;
@@ -130,6 +138,7 @@ impl TestContext {
             chain_name: Some(NEUTRON_CHAIN_NAME.to_owned()),
             denom: Default::default(),
             amount: Default::default(),
+            recipient_addr: Default::default(),
             test_ctx: self,
         }
     }
@@ -140,12 +149,13 @@ impl TestContext {
         key: &str,
         denom: &str,
         amount: u128,
+        recipient: &str,
     ) -> Result<(), Error> {
         let chain = self.get_chain(chain_name);
         let fee_denom = chain.native_denom.as_str();
 
         let _ = chain.rb.tx(
-            format!("tx tokenfactory mint {amount}{denom} --from {key} --fees 500{fee_denom}")
+            format!("tx tokenfactory mint {amount}{denom} {recipient} --from {key} --fees 500{fee_denom}")
                 .as_str(),
             true,
         )?;
