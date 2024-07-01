@@ -129,7 +129,7 @@ impl TestContext {
         )?;
 
         let _ = self.guard_tx_errors(
-            NEUTRON_CHAIN_NAME,
+            chain_name,
             receipt
                 .get("txhash")
                 .and_then(|receipt| receipt.as_str())
@@ -170,7 +170,7 @@ impl TestContext {
             )?;
 
             let _ = self.guard_tx_errors(
-                NEUTRON_CHAIN_NAME,
+                chain_name,
                 receipt
                     .get("txhash")
                     .and_then(|receipt| receipt.as_str())
@@ -187,7 +187,7 @@ impl TestContext {
         )?;
 
         let _ = self.guard_tx_errors(
-            NEUTRON_CHAIN_NAME,
+            chain_name,
             receipt
                 .get("txhash")
                 .and_then(|receipt| receipt.as_str())
