@@ -204,8 +204,8 @@ impl TestContextBuilder {
         } = self;
 
         // Upload contract artifacts
+        
         /// Deploys all neutron contracts to the test context.
-
         fn config_chain_to_local_chain(
             c: ConfigChain,
             api_url: String,
