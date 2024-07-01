@@ -35,10 +35,7 @@ impl TestContext {
             break;
         }
 
-        let raw_log = logs
-            .as_ref()
-            .and_then(|raw_log| raw_log.as_str())
-            .ok_or(Error::TxMissingLogs)?;
+        let raw_log = logs.as_ref().and_then(|raw_log| raw_log.as_str()).unwrap();
 
         if &raw_log == &"" {
             return Ok(());
@@ -216,11 +213,11 @@ impl TestContext {
             .get("data")
             .and_then(|data| data.get("contract_addr"))
             .and_then(|addr| addr.as_str())
-            .ok_or(Error::ContainerCmd(String::from("wasm query pair factory")))?;
+            .unwrap();
         let kind = pair_info
             .get("data")
             .and_then(|data| data.get("pair_type"))
-            .ok_or(Error::ContainerCmd(String::from("wasm query pair factory")))?;
+            .unwrap();
 
         let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
 
@@ -259,19 +256,10 @@ impl TestContext {
             true,
         );
 
-        let res_text = res
-            .get("text")
-            .and_then(|v| v.as_str())
-            .ok_or(Error::ContainerCmd(String::from(
-                "q poolmanager list-pools-by-denom",
-            )))?;
+        let res_text = res.get("text").and_then(|v| v.as_str()).unwrap();
         let res_value: Value = serde_json::from_str(res_text)?;
 
-        let pools_value = res_value
-            .get("pools")
-            .ok_or(Error::ContainerCmd(String::from(
-                "q poolmanager list-pools-by-denom",
-            )))?;
+        let pools_value = res_value.get("pools").unwrap();
         let pool = pools_value
             .as_array()
             .and_then(|pools| {
@@ -290,12 +278,9 @@ impl TestContext {
             })
             .and_then(|pool| pool.get("id"))
             .and_then(|id_str| id_str.as_str())
-            .ok_or(Error::ContainerCmd(String::from(
-                "q poolmanager list-pools-by-denom",
-            )))?;
+            .unwrap();
 
-        pool.parse()
-            .map_err(|_| Error::ContainerCmd(String::from("q poolmanager list-pools-by-denom")))
+        Ok(pool.parse().unwrap())
     }
 
     /// Gets the IBC denom for a base denom given a src and dest chain.
