@@ -1,8 +1,8 @@
 use super::{
     super::{
-        error::Error, AUCTION_CONTRACT_NAME, FACTORY_NAME, NEUTRON_CHAIN_NAME, OSMOSIS_CHAIN_NAME,
-        PAIR_NAME, PRICE_ORACLE_NAME, STABLE_PAIR_NAME, TX_HASH_QUERY_PAUSE_SEC,
-        TX_HASH_QUERY_RETRIES,
+        error::Error, types::ibc::Trace, AUCTION_CONTRACT_NAME, FACTORY_NAME, NEUTRON_CHAIN_NAME,
+        OSMOSIS_CHAIN_NAME, PAIR_NAME, PRICE_ORACLE_NAME, STABLE_PAIR_NAME,
+        TX_HASH_QUERY_PAUSE_SEC, TX_HASH_QUERY_RETRIES,
     },
     test_context::TestContext,
 };
@@ -312,5 +312,23 @@ impl TestContext {
                 .get("hash")?
                 .as_str()?
         ))
+    }
+
+    /// Gets the IBC channel and port for a given denom.
+    pub fn get_ibc_trace(
+        &self,
+        base_denom: impl Into<String>,
+        src_chain: impl Into<String>,
+        dest_chain: impl Into<String>,
+    ) -> Option<Trace> {
+        let channel = self
+            .transfer_channel_ids
+            .get(&(src_chain.into(), dest_chain.into()))?;
+
+        Some(Trace {
+            port_id: "transfer".to_owned(),
+            channel_id: channel.to_owned(),
+            base_denom: base_denom.into(),
+        })
     }
 }
