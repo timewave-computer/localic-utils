@@ -313,7 +313,7 @@ impl TestContext {
         let channel = self
             .transfer_channel_ids
             .get(&(src_chain_string, dest_chain_string))?;
-        let trace = format!("{}/{}", channel, base_denom_str);
+        let trace = format!("transfer/{}/{}", channel, base_denom_str);
 
         let mut hasher = Sha256::new();
         hasher.update(trace.as_bytes());
