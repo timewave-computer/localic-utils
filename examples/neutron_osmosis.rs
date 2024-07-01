@@ -1,6 +1,9 @@
 use localic_utils::{error::Error as LocalIcUtilsError, ConfigChainBuilder, TestContextBuilder};
 use std::error::Error;
 
+const ACC_0_ADDR: &str = "osmo1hj5fveer5cjtn4wd6wstzugjfdxzl0xpwhpz63";
+const NEUTRON_ACC_0_ADDR: &str = "neutron1hj5fveer5cjtn4wd6wstzugjfdxzl0xpznmsky";
+
 /// Demonstrates using localic-utils for neutron + osmosis.
 fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
@@ -20,10 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_chain_name("neutron")
         .with_subdenom("bruhtoken")
         .send()?;
-    let bruhtoken = ctx.get_tokenfactory_denom(
-        "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
-        "bruhtoken",
-    );
+    let bruhtoken = ctx.get_tokenfactory_denom(NEUTRON_ACC_0_ADDR, "bruhtoken");
     ctx.build_tx_mint_tokenfactory_token()
         .with_chain_name("neutron")
         .with_amount(10000000000000000000)
@@ -33,13 +33,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Transfer from osmosis to neutron and neutron to osmosis
     ctx.build_tx_transfer()
         .with_chain_name("neutron")
-        .with_recipient("osmo1kuf2kxwuv2p8k3gnpja7mzf05zvep0cysqyf2a")
+        .with_recipient(ACC_0_ADDR)
         .with_denom("untrn")
         .with_amount(1000000)
         .send()?;
     ctx.build_tx_transfer()
         .with_chain_name("neutron")
-        .with_recipient("osmo1kuf2kxwuv2p8k3gnpja7mzf05zvep0cysqyf2a")
+        .with_recipient(ACC_0_ADDR)
         .with_denom(&bruhtoken)
         .with_amount(1000000)
         .send()?;

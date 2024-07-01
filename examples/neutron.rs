@@ -2,6 +2,8 @@ use cosmwasm_std::Decimal;
 use localic_utils::{types::contract::MinAmount, ConfigChainBuilder, TestContextBuilder};
 use std::error::Error;
 
+const ACC_0_ADDR: &str = "neutron1hj5fveer5cjtn4wd6wstzugjfdxzl0xpznmsky";
+
 /// Demonstrates using localic-utils for neutron.
 fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
@@ -25,14 +27,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_subdenom("amoguscoin")
         .send()?;
 
-    let bruhtoken = ctx.get_tokenfactory_denom(
-        "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
-        "bruhtoken",
-    );
-    let amoguscoin = ctx.get_tokenfactory_denom(
-        "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
-        "amoguscoin",
-    );
+    let bruhtoken = ctx.get_tokenfactory_denom(ACC_0_ADDR, "bruhtoken");
+    let amoguscoin = ctx.get_tokenfactory_denom(ACC_0_ADDR, "amoguscoin");
 
     // Deploy valence auctions
     ctx.build_tx_create_auctions_manager()
@@ -43,7 +39,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 start_auction: "0".into(),
             },
         )])
-        .with_server_addr("neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")
+        .with_server_addr(ACC_0_ADDR)
         .send()?;
     ctx.build_tx_create_price_oracle().send()?;
     ctx.build_tx_manual_oracle_price_update()
@@ -73,26 +69,17 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_amount_offer_asset(10000)
         .send()?;
 
+    ctx.get_auction(("untrn", ctx.get_tokenfactory_denom(ACC_0_ADDR, "bruhtoken")))?;
     ctx.get_auction((
         "untrn",
-        ctx.get_tokenfactory_denom(
-            "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
-            "bruhtoken",
-        ),
-    ))?;
-    ctx.get_auction((
-        "untrn",
-        ctx.get_tokenfactory_denom(
-            "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
-            "amoguscoin",
-        ),
+        ctx.get_tokenfactory_denom(ACC_0_ADDR, "amoguscoin"),
     ))?;
 
     ctx.build_tx_create_token_registry()
-        .with_owner("neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")
+        .with_owner(ACC_0_ADDR)
         .send()?;
     ctx.build_tx_create_factory()
-        .with_owner("neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")
+        .with_owner(ACC_0_ADDR)
         .send()?;
     ctx.build_tx_create_pool()
         .with_denom_a("untrn")
@@ -105,10 +92,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let pool = ctx.get_astroport_pool(
         "untrn",
-        ctx.get_tokenfactory_denom(
-            "neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg",
-            "amoguscoin",
-        ),
+        ctx.get_tokenfactory_denom(ACC_0_ADDR, "amoguscoin"),
     )?;
 
     assert!(pool
@@ -137,7 +121,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_amount_denom_a(10000)
         .with_amount_denom_b(10000)
         .with_slippage_tolerance(Decimal::percent(50))
-        .with_liq_token_receiver("neutron1kuf2kxwuv2p8k3gnpja7mzf05zvep0cyuy7mxg")
+        .with_liq_token_receiver(ACC_0_ADDR)
         .send()?;
 
     Ok(())
