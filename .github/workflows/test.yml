@@ -51,7 +51,7 @@ jobs:
       - name: Run neutron example
         run: cd examples && local-ic start neutron_gaia --api-port 42069 & curl --head -X GET --retry 200 --retry-connrefused --retry-delay 1 http://localhost:42069 && cd examples && cargo run --example neutron_osmosis
   osmosis-int-test:
-    name: Neutron-Osmosis integration test
+    name: Osmosis integration test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
