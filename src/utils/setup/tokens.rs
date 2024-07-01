@@ -163,19 +163,35 @@ impl TestContext {
         let fee_denom = chain.native_denom.as_str();
 
         if let Some(recipient) = recipient {
-            let _ = chain.rb.tx(
+            let receipt = chain.rb.tx(
                 format!("tx tokenfactory mint {amount}{denom} {recipient} --from {key} --fees 500{fee_denom}")
                     .as_str(),
                 true,
             )?;
 
+            let _ = self.guard_tx_errors(
+                NEUTRON_CHAIN_NAME,
+                receipt
+                    .get("txhash")
+                    .and_then(|receipt| receipt.as_str())
+                    .ok_or(Error::TxMissingLogs)?,
+            )?;
+
             return Ok(());
         }
 
-        let _ = chain.rb.tx(
+        let receipt = chain.rb.tx(
             format!("tx tokenfactory mint {amount}{denom} --from {key} --fees 500{fee_denom}")
                 .as_str(),
             true,
+        )?;
+
+        let _ = self.guard_tx_errors(
+            NEUTRON_CHAIN_NAME,
+            receipt
+                .get("txhash")
+                .and_then(|receipt| receipt.as_str())
+                .ok_or(Error::TxMissingLogs)?,
         )?;
 
         Ok(())
