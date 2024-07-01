@@ -97,7 +97,7 @@ impl<'a> MintTokenFactoryTokenTxBuilder<'a> {
                 .ok_or(Error::MissingBuilderParam(String::from("denom")))?,
             self.amount
                 .ok_or(Error::MissingBuilderParam(String::from("amount")))?,
-            self.recipient_addr.unwrap_or_default(),
+            self.recipient_addr,
         )
     }
 }
@@ -149,13 +149,23 @@ impl TestContext {
         key: &str,
         denom: &str,
         amount: u128,
-        recipient: &str,
+        recipient: Option<&str>,
     ) -> Result<(), Error> {
         let chain = self.get_chain(chain_name);
         let fee_denom = chain.native_denom.as_str();
 
+        if let Some(recipient) = recipient {
+            let _ = chain.rb.tx(
+                format!("tx tokenfactory mint {amount}{denom} {recipient} --from {key} --fees 500{fee_denom}")
+                    .as_str(),
+                true,
+            )?;
+
+            return Ok(());
+        }
+
         let _ = chain.rb.tx(
-            format!("tx tokenfactory mint {amount}{denom} {recipient} --from {key} --fees 500{fee_denom}")
+            format!("tx tokenfactory mint {amount}{denom} --from {key} --fees 500{fee_denom}")
                 .as_str(),
             true,
         )?;
