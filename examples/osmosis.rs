@@ -1,6 +1,8 @@
 use localic_utils::{ConfigChainBuilder, TestContextBuilder, OSMOSIS_CHAIN_NAME};
 use std::error::Error;
 
+const ACC_0_ADDR: &str = "osmo1hj5fveer5cjtn4wd6wstzugjfdxzl0xpwhpz63";
+
 /// Demonstrates using localic-utils for neutron.
 fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
@@ -19,13 +21,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_chain_name(OSMOSIS_CHAIN_NAME)
         .with_subdenom("bruhtoken")
         .send()?;
-    let bruhtoken =
-        ctx.get_tokenfactory_denom("osmo1kuf2kxwuv2p8k3gnpja7mzf05zvep0cysqyf2a", "bruhtoken");
+    let bruhtoken = ctx.get_tokenfactory_denom(ACC_0_ADDR, "bruhtoken");
     ctx.build_tx_mint_tokenfactory_token()
         .with_chain_name(OSMOSIS_CHAIN_NAME)
         .with_amount(10000000000000000000)
         .with_denom(&bruhtoken)
-        .with_recipient_addr("osmo1kuf2kxwuv2p8k3gnpja7mzf05zvep0cysqyf2a")
+        .with_recipient_addr(ACC_0_ADDR)
         .send()?;
 
     // Create an osmosis pool
