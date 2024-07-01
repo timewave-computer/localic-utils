@@ -30,13 +30,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_denom(&bruhtoken)
         .send()?;
 
-    let ibc_bruhtoken = ctx.get_ibc_denom(&bruhtoken, "neutron", "osmosis").ok_or(
-        LocalIcUtilsError::MissingContextVariable(format!("ibc_denom::{}", &bruhtoken)),
-    )?;
-    let ibc_neutron = ctx.get_ibc_denom("untrn", "neutron", "osmosis").ok_or(
-        LocalIcUtilsError::MissingContextVariable(format!("ibc_denom::{}", "untrn")),
-    )?;
-
     // Transfer from osmosis to neutron and neutron to osmosis
     ctx.build_tx_transfer()
         .with_chain_name("neutron")
@@ -50,6 +43,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_denom(&bruhtoken)
         .with_amount(1000000)
         .send()?;
+
+    let ibc_bruhtoken = ctx.get_ibc_denom(&bruhtoken, "neutron", "osmosis").ok_or(
+        LocalIcUtilsError::MissingContextVariable(format!("ibc_denom::{}", &bruhtoken)),
+    )?;
+    let ibc_neutron = ctx.get_ibc_denom("untrn", "neutron", "osmosis").ok_or(
+        LocalIcUtilsError::MissingContextVariable(format!("ibc_denom::{}", "untrn")),
+    )?;
 
     // Create an osmosis pool
     ctx.build_tx_create_osmo_pool()

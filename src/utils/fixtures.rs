@@ -8,7 +8,6 @@ use super::{
 };
 use localic_std::modules::cosmwasm::CosmWasm;
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 use std::{path::PathBuf, thread, time::Duration};
 
 impl TestContext {
@@ -310,17 +309,23 @@ impl TestContext {
         let dest_chain_string = dest_chain.into();
         let base_denom_str = base_denom.as_ref();
 
+        let dest_chain = self.get_chain(&dest_chain_string);
+
         let channel = self
             .transfer_channel_ids
             .get(&(src_chain_string, dest_chain_string))?;
         let trace = format!("transfer/{}/{}", channel, base_denom_str);
 
-        let mut hasher = Sha256::new();
-        hasher.update(trace.as_bytes());
+        let resp = dest_chain
+            .rb
+            .q(&format!("q ibc-transfer denom-hash {trace}"), true);
 
         Some(format!(
             "ibc/{}",
-            format!("{:x}", hasher.finalize()).to_uppercase()
+            serde_json::from_str::<Value>(&resp.get("text")?.as_str()?)
+                .ok()?
+                .get("hash")?
+                .as_str()?
         ))
     }
 }
