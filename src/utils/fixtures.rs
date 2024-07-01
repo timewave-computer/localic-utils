@@ -40,6 +40,10 @@ impl TestContext {
             .and_then(|raw_log| raw_log.as_str())
             .ok_or(Error::TxMissingLogs)?;
 
+        if &raw_log == &"" {
+            return Ok(());
+        }
+
         let logs = serde_json::from_str::<Value>(raw_log).map_err(|_| Error::TxFailed {
             hash: hash.to_owned(),
             error: raw_log.to_owned(),
@@ -246,7 +250,7 @@ impl TestContext {
         &self,
         denom_a: impl AsRef<str>,
         denom_b: impl AsRef<str>,
-    ) -> Result<String, Error> {
+    ) -> Result<u64, Error> {
         let osmosis = self.get_chain(OSMOSIS_CHAIN_NAME);
         let denom_a_str = denom_a.as_ref();
 
@@ -290,6 +294,7 @@ impl TestContext {
                 "q poolmanager list-pools-by-denom",
             )))?;
 
-        Ok(pool.to_owned())
+        pool.parse()
+            .map_err(|_| Error::ContainerCmd(String::from("q poolmanager list-pools-by-denom")))
     }
 }

@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         ctx.get_tokenfactory_denom("osmo1kuf2kxwuv2p8k3gnpja7mzf05zvep0cysqyf2a", "bruhtoken");
     ctx.build_tx_mint_tokenfactory_token()
         .with_chain_name(OSMOSIS_CHAIN_NAME)
-        .with_amount(10000000000)
+        .with_amount(10000000000000000000)
         .with_denom(&bruhtoken)
         .with_recipient_addr("osmo1kuf2kxwuv2p8k3gnpja7mzf05zvep0cysqyf2a")
         .send()?;
@@ -37,7 +37,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         .send()?;
 
     // Get its id
-    let pool_id = ctx.get_osmo_pool("uosmo", bruhtoken)?;
+    let pool_id = ctx.get_osmo_pool("uosmo", &bruhtoken)?;
+
+    // Fund the pool
+    ctx.build_tx_fund_osmo_pool()
+        .with_pool_id(pool_id)
+        .with_max_amount_in("uosmo", 10000)
+        .with_max_amount_in(&bruhtoken, 10000)
+        .with_share_amount_out(1000000000000)
+        .send()?;
 
     Ok(())
 }

@@ -65,6 +65,52 @@ impl<'a> CreateOsmoPoolTxBuilder<'a> {
     }
 }
 
+pub struct FundOsmoPoolTxBuilder<'a> {
+    key: &'a str,
+    pool_id: Option<u64>,
+    max_amounts_in: Vec<(u64, &'a str)>,
+    share_amount_out: Option<u64>,
+    test_ctx: &'a mut TestContext,
+}
+
+impl<'a> FundOsmoPoolTxBuilder<'a> {
+    pub fn with_key(&mut self, key: &'a str) -> &mut Self {
+        self.key = key;
+
+        self
+    }
+
+    pub fn with_pool_id(&mut self, pool_id: u64) -> &mut Self {
+        self.pool_id = Some(pool_id);
+
+        self
+    }
+
+    pub fn with_max_amount_in(&mut self, denom: &'a str, amount: u64) -> &mut Self {
+        self.max_amounts_in.push((amount, denom));
+
+        self
+    }
+
+    pub fn with_share_amount_out(&mut self, share_amount_out: u64) -> &mut Self {
+        self.share_amount_out = Some(share_amount_out);
+
+        self
+    }
+
+    /// Sends the transaction, returning the pool ID if it was created successfully.
+    pub fn send(&mut self) -> Result<(), Error> {
+        self.test_ctx.tx_fund_osmo_pool(
+            self.key,
+            self.pool_id
+                .ok_or(Error::MissingBuilderParam(String::from("pool_id")))?,
+            self.max_amounts_in.iter().cloned(),
+            self.share_amount_out
+                .ok_or(Error::MissingBuilderParam(String::from("share_amount_out")))?,
+        )
+    }
+}
+
 impl TestContext {
     pub fn build_tx_create_osmo_pool(&mut self) -> CreateOsmoPoolTxBuilder {
         CreateOsmoPoolTxBuilder {
@@ -123,6 +169,44 @@ impl TestContext {
             format!("tx poolmanager create-pool --pool-file {remote_poolfile_path} --from {key} --fees 2500uosmo --gas 1000000")
             .as_str(),
             true,
+        )?;
+
+        Ok(())
+    }
+
+    pub fn build_tx_fund_osmo_pool(&mut self) -> FundOsmoPoolTxBuilder {
+        FundOsmoPoolTxBuilder {
+            key: DEFAULT_KEY,
+            pool_id: Default::default(),
+            max_amounts_in: Default::default(),
+            share_amount_out: Default::default(),
+            test_ctx: self,
+        }
+    }
+
+    /// Creates an osmosis pool with the given denoms.
+    fn tx_fund_osmo_pool<'a>(
+        &mut self,
+        key: &str,
+        pool_id: u64,
+        max_amounts_in: impl Iterator<Item = (u64, &'a str)>,
+        share_amount_out: u64,
+    ) -> Result<(), Error> {
+        let osmosis = self.get_chain(OSMOSIS_CHAIN_NAME);
+
+        // Enter LP
+        let receipt = osmosis.rb.tx(
+            format!("tx gamm join-pool --pool-id {pool_id} --max-amounts-in {} --share-amount-out {share_amount_out} --from {key} --fees 2500uosmo --gas 1000000", max_amounts_in.map(|(weight, denom)| format!("{weight}{denom}")).collect::<Vec<_>>().join(","))
+            .as_str(),
+            true,
+        )?;
+
+        let _ = self.guard_tx_errors(
+            OSMOSIS_CHAIN_NAME,
+            receipt
+                .get("txhash")
+                .and_then(|receipt| receipt.as_str())
+                .ok_or(Error::TxMissingLogs)?,
         )?;
 
         Ok(())
