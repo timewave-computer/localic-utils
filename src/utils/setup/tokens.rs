@@ -122,10 +122,18 @@ impl TestContext {
         let chain = self.get_chain(chain_name);
         let fee_denom = chain.native_denom.as_str();
 
-        let _ = chain.rb.tx(
+        let receipt = chain.rb.tx(
             format!("tx tokenfactory create-denom {subdenom} --from {key} --fees 25000{fee_denom} --gas 10000000")
                 .as_str(),
             true,
+        )?;
+
+        let _ = self.guard_tx_errors(
+            NEUTRON_CHAIN_NAME,
+            receipt
+                .get("txhash")
+                .and_then(|receipt| receipt.as_str())
+                .ok_or(Error::TxMissingLogs)?,
         )?;
 
         Ok(())
