@@ -317,10 +317,13 @@ impl TestContext {
     /// Gets the IBC channel and port for a given denom.
     pub fn get_ibc_trace(
         &self,
-        base_denom: impl Into<String>,
-        src_chain: impl Into<String>,
-        dest_chain: impl Into<String>,
+        base_denom: impl Into<String> + AsRef<str>,
+        src_chain: impl Into<String> + AsRef<str>,
+        dest_chain: impl Into<String> + AsRef<str>,
     ) -> Option<Trace> {
+        let dest_denom =
+            self.get_ibc_denom(base_denom.as_ref(), src_chain.as_ref(), dest_chain.as_ref())?;
+
         let channel = self
             .transfer_channel_ids
             .get(&(src_chain.into(), dest_chain.into()))?;
@@ -329,6 +332,7 @@ impl TestContext {
             port_id: "transfer".to_owned(),
             channel_id: channel.to_owned(),
             base_denom: base_denom.into(),
+            dest_denom,
         })
     }
 }
