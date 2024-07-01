@@ -8,6 +8,7 @@ use super::{
 };
 use localic_std::modules::cosmwasm::CosmWasm;
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 use std::{path::PathBuf, thread, time::Duration};
 
 impl TestContext {
@@ -296,5 +297,30 @@ impl TestContext {
 
         pool.parse()
             .map_err(|_| Error::ContainerCmd(String::from("q poolmanager list-pools-by-denom")))
+    }
+
+    /// Gets the IBC denom for a base denom given a src and dest chain.
+    pub fn get_ibc_denom(
+        &self,
+        base_denom: impl AsRef<str>,
+        src_chain: impl Into<String>,
+        dest_chain: impl Into<String>,
+    ) -> Option<String> {
+        let src_chain_string = src_chain.into();
+        let dest_chain_string = dest_chain.into();
+        let base_denom_str = base_denom.as_ref();
+
+        let channel = self
+            .transfer_channel_ids
+            .get(&(src_chain_string, dest_chain_string))?;
+        let trace = format!("{}/{}", channel, base_denom_str);
+
+        let mut hasher = Sha256::new();
+        hasher.update(trace.as_bytes());
+
+        Some(format!(
+            "ibc/{}",
+            format!("{:x}", hasher.finalize()).to_uppercase()
+        ))
     }
 }
