@@ -165,10 +165,18 @@ impl TestContext {
         let remote_poolfile_path = format!("/var/cosmos-chain/{chain_id}/pool_file.json");
 
         // Create pool
-        let _ = osmosis.rb.tx(
+        let receipt = osmosis.rb.tx(
             format!("tx poolmanager create-pool --pool-file {remote_poolfile_path} --from {key} --fees 2500uosmo --gas 1000000")
             .as_str(),
             true,
+        )?;
+
+        let _ = self.guard_tx_errors(
+            OSMOSIS_CHAIN_NAME,
+            receipt
+                .get("txhash")
+                .and_then(|receipt| receipt.as_str())
+                .ok_or(Error::TxMissingLogs)?,
         )?;
 
         Ok(())
