@@ -298,7 +298,7 @@ impl TestContext {
 
         let channel = self
             .transfer_channel_ids
-            .get(&(src_chain_string, dest_chain_string))?;
+            .get(&(dest_chain_string, src_chain_string))?;
         let trace = format!("transfer/{}/{}", channel, base_denom_str);
 
         let resp = dest_chain
