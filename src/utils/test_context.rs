@@ -1,24 +1,14 @@
 use super::super::{
-    types::{config::ConfigChain, contract::DeployedContractInfo},
+    error::Error,
+    types::{config::ConfigChain, contract::DeployedContractInfo, ibc::Channel as QueryChannel},
     LOCAL_IC_API_URL, TRANSFER_PORT,
 };
 use cosmwasm_std::{StdError, StdResult};
 use localic_std::{
-    errors::LocalError, modules::cosmwasm::CosmWasm, relayer::Channel, relayer::Relayer,
+    modules::cosmwasm::CosmWasm, relayer::Channel, relayer::Relayer,
     transactions::ChainRequestBuilder,
 };
 use std::{collections::HashMap, path::PathBuf};
-use thiserror::Error;
-
-#[derive(Error, Debug)]
-pub enum BuildError {
-    #[error("the field `{0}` is missing")]
-    MissingField(String),
-    #[error("encountered a localic error: `{0}`")]
-    LocalIc(#[from] LocalError),
-    #[error("cosmwasm error: `{0}`")]
-    StdError(#[from] StdError),
-}
 
 /// A configurable builder that can be used to create a TestContext.
 pub struct TestContextBuilder {
@@ -190,7 +180,7 @@ impl TestContextBuilder {
     }
 
     /// Builds a TestContext from the specified options.
-    pub fn build(&self) -> Result<TestContext, BuildError> {
+    pub fn build(&self) -> Result<TestContext, Error> {
         let TestContextBuilder {
             chains,
             transfer_channel_ids,
@@ -204,12 +194,12 @@ impl TestContextBuilder {
         } = self;
 
         // Upload contract artifacts
-        
+
         /// Deploys all neutron contracts to the test context.
         fn config_chain_to_local_chain(
             c: ConfigChain,
             api_url: String,
-        ) -> Result<LocalChain, BuildError> {
+        ) -> Result<LocalChain, Error> {
             let rb = ChainRequestBuilder::new(api_url.to_owned(), c.chain_id.clone(), c.debugging)?;
 
             let relayer = Relayer::new(&rb);
@@ -225,7 +215,7 @@ impl TestContextBuilder {
             ))
         }
 
-        let chains_res: Result<HashMap<String, LocalChain>, BuildError> = chains
+        let chains_res: Result<HashMap<String, LocalChain>, Error> = chains
             .clone()
             .into_iter()
             .map(|builder| {
@@ -233,7 +223,7 @@ impl TestContextBuilder {
                     builder,
                     api_url
                         .clone()
-                        .ok_or(BuildError::MissingField(String::from("api_url")))?,
+                        .ok_or(Error::MissingBuilderParam(String::from("api_url")))?,
                 )
             })
             .fold(Ok(HashMap::new()), |acc, x| {
@@ -251,14 +241,15 @@ impl TestContextBuilder {
         for (chain_a, chain_b) in transfer_channels {
             let chain_a_chain = chains
                 .get(chain_a)
-                .ok_or(BuildError::MissingField(String::from("chain")))?;
+                .ok_or(Error::MissingBuilderParam(String::from("chain")))?;
             let chain_b_chain = chains
                 .get(chain_b)
-                .ok_or(BuildError::MissingField(String::from("chain")))?;
+                .ok_or(Error::MissingBuilderParam(String::from("chain")))?;
 
             let conns = find_pairwise_transfer_channel_ids(
-                chain_a_chain.channels.as_slice(),
-                chain_b_chain.channels.as_slice(),
+                &chain_a_chain.rb,
+                &chain_a_chain.rb.chain_id,
+                &chain_b_chain.rb.chain_id,
             )?;
 
             transfer_channel_ids.insert((chain_a.clone(), chain_b.clone()), conns.0.channel_id);
@@ -273,7 +264,7 @@ impl TestContextBuilder {
             ibc_denoms: ibc_denoms.clone(),
             artifacts_dir: artifacts_dir
                 .clone()
-                .ok_or(BuildError::MissingField(String::from("artifacts_dir")))?,
+                .ok_or(Error::MissingBuilderParam(String::from("artifacts_dir")))?,
             auctions_manager: None,
             astroport_token_registry: None,
             astroport_factory: None,
@@ -571,36 +562,41 @@ impl<'a> TestContextQuery<'a> {
 }
 
 pub fn find_pairwise_transfer_channel_ids(
-    a: &[Channel],
-    b: &[Channel],
-) -> StdResult<(PairwiseChannelResult, PairwiseChannelResult)> {
-    for (a_i, a_chan) in a.iter().enumerate() {
-        for (b_i, b_chan) in b.iter().enumerate() {
-            if a_chan.channel_id == b_chan.counterparty.channel_id
-                && b_chan.channel_id == a_chan.counterparty.channel_id
-                && a_chan.port_id == TRANSFER_PORT
-                && b_chan.port_id == TRANSFER_PORT
-                && a_chan.ordering == "ORDER_UNORDERED"
-                && b_chan.ordering == "ORDER_UNORDERED"
-            {
-                let a_channel_result = PairwiseChannelResult {
-                    index: a_i,
-                    channel_id: a_chan.channel_id.to_string(),
-                    connection_id: a_chan.connection_hops[0].to_string(),
-                };
-                let b_channel_result = PairwiseChannelResult {
-                    index: b_i,
-                    channel_id: b_chan.channel_id.to_string(),
-                    connection_id: b_chan.connection_hops[0].to_string(),
-                };
+    rb: &ChainRequestBuilder,
+    src_chain_id: &str,
+    dest_chain_id: &str,
+) -> Result<(PairwiseChannelResult, PairwiseChannelResult), Error> {
+    let relayer = Relayer::new(rb);
+    let cmd = format!("rly q channels {src_chain_id} {dest_chain_id}");
+    let result = relayer.execute(cmd.as_str(), true).unwrap();
+    let json_string = result["text"].as_str().unwrap();
+    let channels = json_string
+        .split('\n')
+        .filter(|s| !s.is_empty())
+        .map(|s| serde_json::from_str(s));
 
-                return Ok((a_channel_result, b_channel_result));
-            }
+    for maybe_channel in channels {
+        let channel: QueryChannel = maybe_channel?;
+
+        if channel.port_id == TRANSFER_PORT {
+            let party_channel = PairwiseChannelResult {
+                index: 0,
+                channel_id: channel.channel_id.to_owned(),
+                connection_id: channel.connection_hops[0].to_owned(),
+            };
+            let counterparty_channel = PairwiseChannelResult {
+                index: 0,
+                channel_id: channel.counterparty.channel_id.to_owned(),
+                connection_id: channel.connection_hops[0].to_owned(),
+            };
+
+            return Ok((party_channel, counterparty_channel));
         }
     }
-    Err(StdError::generic_err(
-        "failed to match pairwise transfer channels",
-    ))
+
+    Err(Error::MissingContextVariable(String::from(format!(
+        "channel_ids::{src_chain_id}-{dest_chain_id}"
+    ))))
 }
 
 pub fn find_pairwise_ccv_channel_ids(
