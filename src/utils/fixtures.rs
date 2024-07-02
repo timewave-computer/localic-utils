@@ -285,7 +285,7 @@ impl TestContext {
 
     /// Gets the IBC denom for a base denom given a src and dest chain.
     pub fn get_ibc_denom(
-        &self,
+        &mut self,
         base_denom: impl AsRef<str>,
         src_chain: impl Into<String>,
         dest_chain: impl Into<String>,
@@ -294,29 +294,45 @@ impl TestContext {
         let dest_chain_string = dest_chain.into();
         let base_denom_str = base_denom.as_ref();
 
+        if let Some(denom) = self
+            .ibc_denoms
+            .get(&(base_denom_str.into(), dest_chain_string.clone()))
+        {
+            return Some(denom.clone());
+        }
+
         let dest_chain = self.get_chain(&dest_chain_string);
 
         let channel = self
             .transfer_channel_ids
-            .get(&(dest_chain_string, src_chain_string))?;
+            .get(&(dest_chain_string.clone(), src_chain_string.clone()))?;
         let trace = format!("transfer/{}/{}", channel, base_denom_str);
 
         let resp = dest_chain
             .rb
             .q(&format!("q ibc-transfer denom-hash {trace}"), true);
 
-        Some(format!(
+        let ibc_denom = format!(
             "ibc/{}",
             serde_json::from_str::<Value>(&resp.get("text")?.as_str()?)
                 .ok()?
                 .get("hash")?
                 .as_str()?
-        ))
+        );
+
+        self.ibc_denoms.insert(
+            (base_denom_str.into(), dest_chain_string.clone()),
+            ibc_denom.clone(),
+        );
+        self.ibc_denoms
+            .insert((ibc_denom.clone(), src_chain_string), base_denom_str.into());
+
+        Some(ibc_denom)
     }
 
     /// Gets the IBC channel and port for a given denom.
     pub fn get_ibc_trace(
-        &self,
+        &mut self,
         base_denom: impl Into<String> + AsRef<str>,
         src_chain: impl Into<String> + AsRef<str>,
         dest_chain: impl Into<String> + AsRef<str>,
