@@ -26,7 +26,6 @@ fn main() {
 
 #### Required builder calls
 
-* `.with_api_url(api_url: impl Into<String>)`
 * `.with_artifacts_dir(dir: impl Into<String>)`
   * Should be a directory containing contracts for any features of localic-utils you would like to use, including:
     * Astroport factory, pair, and native coin registry contracts
@@ -34,12 +33,13 @@ fn main() {
 	* Valence auctions manager, auction, and price oracle contracts
   * **See a full list of contracts used and their expected names in [lib.rs](https://github.com/timewave-computer/localic-utils/blob/main/src/lib.rs).**	
 
-The `TestContextBuilder` cannot be successfully built without specifying an API URL and an artifacts dir. The builder will return an `Error::MissingBuilderParam` if either of these calls are not made.
+The `TestContextBuilder` cannot be successfully built without specifying an artifacts dir. The builder will return an `Error::MissingBuilderParam` if this call is not made.
 
 #### Notable optional builder calls
 
 For a full list of builder calls available under the `TestContextBuilder`, see [test_context.rs](https://github.com/timewave-computer/localic-utils/blob/main/src/utils/test_context.rs).
 
+* `.with_api_url(api_url: impl Into<String>)`
 * `.with_chain(chain: ConfigChain)`
   * The `TestContext` is not configured to use any chains by default. Calling this builder method adds a `ConfigChain`, which grants the `TestContext` access to that chain's related helper functions. These helper functions will error without access to their requisite chains.
 * `.with_transfer_channel(chain_a: impl Into<String>, chain_b: impl Into<String>)`
@@ -216,4 +216,4 @@ Note that most `tx_*` helper functions expose a `.with_key(key: &str)` builder f
 
 ### Complete Example
 
-Examples of using almsot every helper function provided by this repository are available in the [examples](https://github.com/timewave-computer/tree/main/examples) directory.
+Examples of using almost every helper function provided by this repository are available in the [examples](https://github.com/timewave-computer/tree/main/examples) directory.
