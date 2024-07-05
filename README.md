@@ -165,6 +165,7 @@ Note that most `tx_*` helper functions expose a `.with_key(key: &str)` builder f
     * `.with_offer_asset(offer_asset: &str)`
     * `.with_ask_asset(ask_asset: &str)`
 	* `.with_end_block_delta(delta: u128)`
+	* `.with_start_block(block: u128)` - Sets a start block time for the auction
   * Notable builder calls:
     * No notable optional builder calls
 

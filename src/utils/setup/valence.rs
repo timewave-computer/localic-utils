@@ -194,7 +194,7 @@ pub struct StartAuctionTxBuilder<'a> {
     key: &'a str,
     offer_asset: Option<&'a str>,
     ask_asset: Option<&'a str>,
-    start_block_delta: Option<u128>,
+    start_block: Option<u128>,
     end_block_delta: Option<u128>,
     test_ctx: &'a mut TestContext,
 }
@@ -218,8 +218,8 @@ impl<'a> StartAuctionTxBuilder<'a> {
         self
     }
 
-    pub fn with_start_block_delta(&mut self, start_block_delta: u128) -> &mut Self {
-        self.start_block_delta = Some(start_block_delta);
+    pub fn with_start_block(&mut self, start_block: u128) -> &mut Self {
+        self.start_block = Some(start_block);
 
         self
     }
@@ -234,7 +234,7 @@ impl<'a> StartAuctionTxBuilder<'a> {
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_start_auction(
             self.key,
-            self.start_block_delta,
+            self.start_block,
             self.end_block_delta
                 .ok_or(Error::MissingBuilderParam(String::from("end_block_delta")))?,
             (
@@ -761,7 +761,7 @@ impl TestContext {
             key: DEFAULT_KEY,
             offer_asset: Default::default(),
             ask_asset: Default::default(),
-            start_block_delta: Default::default(),
+            start_block: Default::default(),
             end_block_delta: Default::default(),
             test_ctx: self,
         }
@@ -771,14 +771,14 @@ impl TestContext {
     fn tx_start_auction<TDenomA: AsRef<str>, TDenomB: AsRef<str>>(
         &mut self,
         sender_key: &str,
-        start_block_delta: Option<u128>,
+        start_block: Option<u128>,
         end_blocks: u128,
         pair: (TDenomA, TDenomB),
     ) -> Result<(), Error> {
         let manager = self.get_auctions_manager()?;
         let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
 
-        let start_block = {
+        let start_block = start_block.unwrap_or({
             let start_block_resp = neutron
                 .rb
                 .bin("q block --node=%RPC% --chain-id=%CHAIN_ID%", true);
@@ -797,7 +797,7 @@ impl TestContext {
                 .as_str()
                 .and_then(|s| s.parse::<u128>().ok())
                 .ok_or(Error::ContainerCmd(String::from("query block")))?
-        };
+        });
 
         let receipt = manager.execute(
             sender_key,
@@ -806,8 +806,8 @@ impl TestContext {
                     "open_auction": {
                         "pair": (pair.0.as_ref(), pair.1.as_ref()),
                         "params": {
-                        "end_block": start_block + start_block_delta.unwrap_or_default() + end_blocks,
-                        "start_block": start_block + start_block_delta.unwrap_or_default(),
+                        "end_block": start_block + end_blocks,
+                        "start_block": start_block,
                     }
                 }},
             })
