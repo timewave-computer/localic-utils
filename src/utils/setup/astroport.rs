@@ -246,9 +246,7 @@ impl TestContext {
 
         neutron
             .contract_addrs
-            .entry(TOKEN_REGISTRY_NAME.to_owned())
-            .or_default()
-            .push(addr.clone());
+            .insert(TOKEN_REGISTRY_NAME.to_owned(), addr.clone());
 
         self.astroport_token_registry = Some(DeployedContractInfo {
             code_id,
@@ -305,13 +303,11 @@ impl TestContext {
                     "contract_codes::astroport_whitelist",
                 )))?;
 
-        let native_registry_addr = neutron
-            .contract_addrs
-            .get(TOKEN_REGISTRY_NAME)
-            .and_then(|maybe_addr| maybe_addr.get(0))
-            .ok_or(Error::MissingContextVariable(String::from(
+        let native_registry_addr = neutron.contract_addrs.get(TOKEN_REGISTRY_NAME).ok_or(
+            Error::MissingContextVariable(String::from(
                 "contract_ddrs::astroport_native_coin_registry",
-            )))?;
+            )),
+        )?;
 
         let mut contract_a = self.get_contract(FACTORY_NAME)?;
 
@@ -356,9 +352,7 @@ impl TestContext {
 
         neutron
             .contract_addrs
-            .entry(FACTORY_NAME.to_owned())
-            .or_default()
-            .push(contract.address);
+            .insert(FACTORY_NAME.to_owned(), contract.address);
 
         Ok(())
     }
@@ -383,10 +377,7 @@ impl TestContext {
         denom_b: impl Into<String>,
     ) -> Result<(), Error> {
         // Factory contract instance
-        let contracts = self.get_astroport_factory()?;
-        let contract_a = contracts
-            .get(0)
-            .ok_or(Error::MissingContextVariable(String::from(FACTORY_NAME)))?;
+        let contract_a = self.get_astroport_factory()?;
 
         // Create the pair
         let tx = contract_a.execute(

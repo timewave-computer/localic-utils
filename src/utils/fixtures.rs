@@ -102,7 +102,6 @@ impl TestContext {
         let contract_addr = neutron
             .contract_addrs
             .get(PRICE_ORACLE_NAME)
-            .and_then(|addrs| addrs.get(0))
             .cloned()
             .ok_or(Error::MissingContextVariable(String::from(
                 "contract_addrs::price_oracle",
@@ -144,7 +143,7 @@ impl TestContext {
     }
 
     /// Gets the deployed atroport factory for Neutron.
-    pub fn get_astroport_factory(&self) -> Result<Vec<CosmWasm>, Error> {
+    pub fn get_astroport_factory(&self) -> Result<CosmWasm, Error> {
         let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
 
         let code_id =
@@ -154,7 +153,7 @@ impl TestContext {
                 .ok_or(Error::MissingContextVariable(format!(
                     "contract_codes::{FACTORY_NAME}",
                 )))?;
-        let contract_addrs =
+        let contract_addr =
             neutron
                 .contract_addrs
                 .get(FACTORY_NAME)
@@ -164,19 +163,14 @@ impl TestContext {
 
         let artifacts_path = self.artifacts_dir.as_str();
 
-        Ok(contract_addrs
-            .into_iter()
-            .map(|addr| {
-                CosmWasm::new_from_existing(
-                    &neutron.rb,
-                    Some(PathBuf::from(format!(
-                        "{artifacts_path}/{FACTORY_NAME}.wasm"
-                    ))),
-                    Some(*code_id),
-                    Some(addr.clone()),
-                )
-            })
-            .collect::<Vec<_>>())
+        Ok(CosmWasm::new_from_existing(
+            &neutron.rb,
+            Some(PathBuf::from(format!(
+                "{artifacts_path}/{FACTORY_NAME}.wasm"
+            ))),
+            Some(*code_id),
+            Some(contract_addr.clone()),
+        ))
     }
 
     /// Gets a previously deployed astroport pair.
@@ -185,10 +179,7 @@ impl TestContext {
         denom_a: impl AsRef<str>,
         denom_b: impl AsRef<str>,
     ) -> Result<CosmWasm, Error> {
-        let factories = self.get_astroport_factory()?;
-        let factory = factories
-            .get(0)
-            .ok_or(Error::MissingContextVariable(String::from(FACTORY_NAME)))?;
+        let factory = self.get_astroport_factory()?;
 
         let pair_info = factory.query_value(&serde_json::json!(
             {
