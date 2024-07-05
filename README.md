@@ -17,8 +17,8 @@ fn main() {
         .with_api_url("http://localhost:42069/")
         .with_artifacts_dir("contracts")
         .with_chain(ConfigChainBuilder::default_neutron()
-	        .build()
-			.expect("Failed to build neutron"))
+        .build()
+        .expect("Failed to build neutron"))
         .build()
 		.expect("Failed to build TestContext");
 }
@@ -58,8 +58,8 @@ use localic_utils::{ConfigChainBuilder};
 
 fn main() {
     let chain = ConfigChainBuilder::default_neutron()
-	    .build()
-		.expect("Failed to build neutron");
+        .build()
+        .expect("Failed to build neutron");
 }
 ```
 
