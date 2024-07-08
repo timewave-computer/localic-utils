@@ -16,7 +16,7 @@ pub const WASM_EXTENSION: &str = "wasm";
 
 // Gaia chain info
 pub const GAIA_CHAIN_ID: &str = "localcosmos-1";
-pub const GAIA_CHAIN_NAME: &str = "cosmoshub";
+pub const GAIA_CHAIN_NAME: &str = "gaia";
 pub const GAIA_CHAIN_PREFIX: &str = "cosmos";
 pub const GAIA_CHAIN_DENOM: &str = "uatom";
 pub const GAIA_CHAIN_ADMIN_ADDR: &str = "cosmos1hj5fveer5cjtn4wd6wstzugjfdxzl0xpxvjjvr";

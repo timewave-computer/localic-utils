@@ -274,9 +274,21 @@ impl TestContextBuilder {
 
             transfer_channel_ids.insert(
                 (chain_a.clone(), chain_b.clone()),
-                conns.0.channel_id.clone(),
+                conns.channel_id.clone(),
             );
-            connection_ids.insert((chain_a.clone(), chain_b.clone()), conns.0.connection_id);
+            connection_ids.insert((chain_a.clone(), chain_b.clone()), conns.connection_id);
+
+            let conns = find_pairwise_transfer_channel_ids(
+                &chain_b_chain.rb,
+                &chain_b_chain.rb.chain_id,
+                &chain_a_chain.rb.chain_id,
+            )?;
+
+            transfer_channel_ids.insert(
+                (chain_b.clone(), chain_a.clone()),
+                conns.channel_id.clone(),
+            );
+            connection_ids.insert((chain_b.clone(), chain_a.clone()), conns.connection_id);
         }
 
         let mut ccv_channel_ids = ccv_channel_ids.clone();
@@ -628,7 +640,7 @@ pub fn find_pairwise_transfer_channel_ids(
     rb: &ChainRequestBuilder,
     src_chain_id: &str,
     dest_chain_id: &str,
-) -> Result<(PairwiseChannelResult, PairwiseChannelResult), Error> {
+) -> Result<PairwiseChannelResult, Error> {
     let relayer = Relayer::new(rb);
     let cmd = format!("rly q channels {src_chain_id} {dest_chain_id}");
     let result = relayer.execute(cmd.as_str(), true).unwrap();
@@ -636,24 +648,17 @@ pub fn find_pairwise_transfer_channel_ids(
     let channels = json_string
         .split('\n')
         .filter(|s| !s.is_empty())
-        .map(serde_json::from_str);
+        .map(serde_json::from_str)
+        .collect::<Result<Vec<QueryChannel>, _>>()?;
 
-    for maybe_channel in channels {
-        let channel: QueryChannel = maybe_channel?;
-
+    for channel in channels {
         if channel.port_id == TRANSFER_PORT {
             let party_channel = PairwiseChannelResult {
                 index: 0,
-                channel_id: channel.channel_id.to_owned(),
-                connection_id: channel.connection_hops[0].to_owned(),
+                channel_id: channel.channel_id.to_string(),
+                connection_id: channel.connection_hops[0].to_string(),
             };
-            let counterparty_channel = PairwiseChannelResult {
-                index: 0,
-                channel_id: channel.counterparty.channel_id.to_owned(),
-                connection_id: channel.connection_hops[0].to_owned(),
-            };
-
-            return Ok((party_channel, counterparty_channel));
+            return Ok(party_channel);
         }
     }
 
