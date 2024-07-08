@@ -16,7 +16,7 @@ pub const WASM_EXTENSION: &str = "wasm";
 
 // Gaia chain info
 pub const GAIA_CHAIN_ID: &str = "localcosmos-1";
-pub const GAIA_CHAIN_NAME: &str = "cosmos";
+pub const GAIA_CHAIN_NAME: &str = "cosmoshub";
 pub const GAIA_CHAIN_PREFIX: &str = "cosmos";
 pub const GAIA_CHAIN_DENOM: &str = "uatom";
 pub const GAIA_CHAIN_ADMIN_ADDR: &str = "cosmos1hj5fveer5cjtn4wd6wstzugjfdxzl0xpxvjjvr";
@@ -62,7 +62,6 @@ pub const ADMIN_KEY: &str = "admin";
 pub const DEFAULT_KEY: &str = "acc0";
 pub const DEFAULT_TRANSFER_PORT: &str = "transfer";
 pub const DEFAULT_AUCTION_LABEL: &str = "auction";
-pub const DEFAULT_NEUTRON_CHAIN_ID: &str = "localneutron-1";
 
 pub const TX_HASH_QUERY_RETRIES: u16 = 5;
 pub const TX_HASH_QUERY_PAUSE_SEC: u64 = 2;
