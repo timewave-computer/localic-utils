@@ -37,7 +37,7 @@ impl TestContext {
 
         let raw_log = logs.as_ref().and_then(|raw_log| raw_log.as_str()).unwrap();
 
-        if &raw_log == &"" {
+        if raw_log.is_empty() {
             return Ok(());
         }
 
@@ -89,7 +89,7 @@ impl TestContext {
         Ok(CosmWasm::new_from_existing(
             &neutron.rb,
             Some(contract_info.artifact_path.clone()),
-            Some(contract_info.code_id.clone()),
+            Some(contract_info.code_id),
             Some(contract_info.address.clone()),
         ))
     }
@@ -102,7 +102,7 @@ impl TestContext {
         let contract_addr = neutron
             .contract_addrs
             .get(PRICE_ORACLE_NAME)
-            .and_then(|addrs| addrs.get(0))
+            .and_then(|addrs| addrs.first())
             .cloned()
             .ok_or(Error::MissingContextVariable(String::from(
                 "contract_addrs::price_oracle",
@@ -165,7 +165,7 @@ impl TestContext {
         let artifacts_path = self.artifacts_dir.as_str();
 
         Ok(contract_addrs
-            .into_iter()
+            .iter()
             .map(|addr| {
                 CosmWasm::new_from_existing(
                     &neutron.rb,
@@ -187,7 +187,7 @@ impl TestContext {
     ) -> Result<CosmWasm, Error> {
         let factories = self.get_astroport_factory()?;
         let factory = factories
-            .get(0)
+            .first()
             .ok_or(Error::MissingContextVariable(String::from(FACTORY_NAME)))?;
 
         let pair_info = factory.query_value(&serde_json::json!(
@@ -314,7 +314,7 @@ impl TestContext {
 
         let ibc_denom = format!(
             "ibc/{}",
-            serde_json::from_str::<Value>(&resp.get("text")?.as_str()?)
+            serde_json::from_str::<Value>(resp.get("text")?.as_str()?)
                 .ok()?
                 .get("hash")?
                 .as_str()?

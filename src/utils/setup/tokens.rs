@@ -128,7 +128,7 @@ impl TestContext {
             true,
         )?;
 
-        let _ = self.guard_tx_errors(
+        self.guard_tx_errors(
             chain_name,
             receipt
                 .get("txhash")
@@ -169,7 +169,7 @@ impl TestContext {
                 true,
             )?;
 
-            let _ = self.guard_tx_errors(
+            self.guard_tx_errors(
                 chain_name,
                 receipt
                     .get("txhash")
@@ -186,7 +186,7 @@ impl TestContext {
             true,
         )?;
 
-        let _ = self.guard_tx_errors(
+        self.guard_tx_errors(
             chain_name,
             receipt
                 .get("txhash")

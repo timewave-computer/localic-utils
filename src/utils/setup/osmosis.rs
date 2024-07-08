@@ -155,9 +155,9 @@ impl TestContext {
             .open(OSMOSIS_POOLFILE_PATH)?;
         f.write_all(poolfile_str.as_bytes())?;
 
-        let _ = osmosis
+        osmosis
             .rb
-            .upload_file(&Path::new(OSMOSIS_POOLFILE_PATH), true)?
+            .upload_file(Path::new(OSMOSIS_POOLFILE_PATH), true)?
             .send()?
             .text()?;
 
@@ -171,7 +171,7 @@ impl TestContext {
             true,
         )?;
 
-        let _ = self.guard_tx_errors(
+        self.guard_tx_errors(
             OSMOSIS_CHAIN_NAME,
             receipt
                 .get("txhash")
@@ -209,7 +209,7 @@ impl TestContext {
             true,
         )?;
 
-        let _ = self.guard_tx_errors(
+        self.guard_tx_errors(
             OSMOSIS_CHAIN_NAME,
             receipt
                 .get("txhash")

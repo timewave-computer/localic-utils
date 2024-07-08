@@ -108,7 +108,7 @@ impl TestContext {
 
         let receipt = chain.rb.tx(&format!("tx ibc-transfer transfer {port} {channel} {recipient} {amount}{denom} --fees=100000{fee_denom} --from={key}"), true)?;
 
-        let _ = self.guard_tx_errors(
+        self.guard_tx_errors(
             src_chain_name,
             receipt
                 .get("txhash")

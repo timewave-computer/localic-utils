@@ -14,7 +14,15 @@ pub const TRANSFER_PORT: &str = "transfer";
 /// File extension for WASM files
 pub const WASM_EXTENSION: &str = "wasm";
 
+// Gaia chain info
+pub const GAIA_CHAIN_ID: &str = "localcosmos-1";
+pub const GAIA_CHAIN_NAME: &str = "cosmos";
+pub const GAIA_CHAIN_PREFIX: &str = "cosmos";
+pub const GAIA_CHAIN_DENOM: &str = "uatom";
+pub const GAIA_CHAIN_ADMIN_ADDR: &str = "cosmos1hj5fveer5cjtn4wd6wstzugjfdxzl0xpxvjjvr";
+
 /// Neutron chain info
+pub const NEUTRON_CHAIN_ID: &str = "localneutron-1";
 pub const NEUTRON_CHAIN_NAME: &str = "neutron";
 pub const NEUTRON_CHAIN_PREFIX: &str = "neutron";
 pub const NEUTRON_CHAIN_DENOM: &str = "untrn";

@@ -13,9 +13,9 @@ pub struct ChainsVec {
     pub chains: Vec<ConfigChain>,
 }
 
-impl Into<Vec<ConfigChain>> for ChainsVec {
-    fn into(self) -> Vec<ConfigChain> {
-        self.chains
+impl From<ChainsVec> for Vec<ConfigChain> {
+    fn from(val: ChainsVec) -> Vec<ConfigChain> {
+        val.chains
     }
 }
 

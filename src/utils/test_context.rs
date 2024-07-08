@@ -3,7 +3,7 @@ use super::super::{
     types::{config::ConfigChain, contract::DeployedContractInfo, ibc::Channel as QueryChannel},
     LOCAL_IC_API_URL, TRANSFER_PORT,
 };
-use cosmwasm_std::{StdError, StdResult};
+
 use localic_std::{
     modules::cosmwasm::CosmWasm, relayer::Channel, relayer::Relayer,
     transactions::ChainRequestBuilder,
@@ -21,6 +21,7 @@ pub struct TestContextBuilder {
     artifacts_dir: Option<String>,
     unwrap_raw_logs: bool,
     transfer_channels: Vec<(String, String)>,
+    ccv_channels: Vec<(String, String)>,
 }
 
 impl Default for TestContextBuilder {
@@ -35,6 +36,7 @@ impl Default for TestContextBuilder {
             artifacts_dir: Default::default(),
             unwrap_raw_logs: Default::default(),
             transfer_channels: Default::default(),
+            ccv_channels: Default::default(),
         }
     }
 }
@@ -84,14 +86,30 @@ impl TestContextBuilder {
         self
     }
 
-    /// Inserts a channel for transfer between the specified chains.
+    /// Inserts a transfer channel between the specified chains in both directions.
     pub fn with_transfer_channel(
         &mut self,
-        chain_a: impl Into<String>,
-        chain_b: impl Into<String>,
+        chain_a: impl Into<String> + std::marker::Copy,
+        chain_b: impl Into<String> + std::marker::Copy,
     ) -> &mut Self {
         self.transfer_channels
             .push((chain_a.into(), chain_b.into()));
+
+        self.transfer_channels
+            .push((chain_b.into(), chain_a.into()));
+
+        self
+    }
+
+    // Inserts a ccv channel b etween the specified chains in both directions.
+    pub fn with_ccv_channel(
+        &mut self,
+        chain_a: impl Into<String> + std::marker::Copy,
+        chain_b: impl Into<String> + std::marker::Copy,
+    ) -> &mut Self {
+        self.ccv_channels.push((chain_a.into(), chain_b.into()));
+
+        self.ccv_channels.push((chain_b.into(), chain_a.into()));
 
         self
     }
@@ -191,6 +209,7 @@ impl TestContextBuilder {
             artifacts_dir,
             unwrap_raw_logs,
             transfer_channels,
+            ccv_channels,
         } = self;
 
         // Upload contract artifacts
@@ -226,9 +245,9 @@ impl TestContextBuilder {
                         .ok_or(Error::MissingBuilderParam(String::from("api_url")))?,
                 )
             })
-            .fold(Ok(HashMap::new()), |acc, x| {
+            .try_fold(HashMap::new(), |acc, x| {
                 let x = x?;
-                let mut acc = acc?;
+                let mut acc = acc;
 
                 acc.insert(x.chain_name.clone(), x);
 
@@ -237,6 +256,8 @@ impl TestContextBuilder {
         let chains = chains_res?;
 
         let mut transfer_channel_ids = transfer_channel_ids.clone();
+        let mut connection_ids = connection_ids.clone();
+        let mut ibc_denoms = ibc_denoms.clone();
 
         for (chain_a, chain_b) in transfer_channels {
             let chain_a_chain = chains
@@ -252,8 +273,35 @@ impl TestContextBuilder {
                 &chain_b_chain.rb.chain_id,
             )?;
 
-            transfer_channel_ids.insert((chain_a.clone(), chain_b.clone()), conns.0.channel_id);
-            transfer_channel_ids.insert((chain_b.clone(), chain_a.clone()), conns.1.channel_id);
+            transfer_channel_ids.insert(
+                (chain_a.clone(), chain_b.clone()),
+                conns.0.channel_id.clone(),
+            );
+            connection_ids.insert((chain_a.clone(), chain_b.clone()), conns.0.connection_id);
+            ibc_denoms.insert((chain_a.clone(), chain_b.clone()), conns.0.channel_id);
+        }
+
+        let mut ccv_channel_ids = ccv_channel_ids.clone();
+
+        for (chain_a, chain_b) in ccv_channels {
+            let chain_a_chain = chains
+                .get(chain_a)
+                .ok_or(Error::MissingBuilderParam(String::from("chain")))?;
+            let chain_b_chain = chains
+                .get(chain_b)
+                .ok_or(Error::MissingBuilderParam(String::from("chain")))?;
+
+            let conns =
+                find_pairwise_ccv_channel_ids(&chain_a_chain.channels, &chain_b_chain.channels)?;
+
+            ccv_channel_ids.insert(
+                (chain_a.clone(), chain_b.clone()),
+                conns.0.channel_id.clone(),
+            );
+            ccv_channel_ids.insert(
+                (chain_b.clone(), chain_a.clone()),
+                conns.1.channel_id.clone(),
+            );
         }
 
         Ok(TestContext {
@@ -373,6 +421,10 @@ impl TestContext {
         TestContextQuery::new(self, QueryType::NativeDenom)
     }
 
+    pub fn get_chain_prefix(&self) -> TestContextQuery {
+        TestContextQuery::new(self, QueryType::ChainPrefix)
+    }
+
     pub fn get_request_builder(&self) -> TestContextQuery {
         TestContextQuery::new(self, QueryType::RequestBuilder)
     }
@@ -393,6 +445,7 @@ pub enum QueryType {
     IBCDenom,
     AdminAddr,
     NativeDenom,
+    ChainPrefix,
     RequestBuilder,
 }
 
@@ -438,6 +491,7 @@ impl<'a> TestContextQuery<'a> {
             QueryType::IBCDenom => self.get_ibc_denom(),
             QueryType::AdminAddr => self.get_admin_addr(),
             QueryType::NativeDenom => self.get_native_denom(),
+            QueryType::ChainPrefix => self.get_chain_prefix(),
             _ => None,
         };
         query_response.unwrap()
@@ -552,6 +606,17 @@ impl<'a> TestContextQuery<'a> {
         }
     }
 
+    fn get_chain_prefix(self) -> Option<String> {
+        if let Some(ref src) = self.src_chain {
+            self.context
+                .chains
+                .get(src)
+                .map(|chain| chain.chain_prefix.clone())
+        } else {
+            None
+        }
+    }
+
     fn get_rb(self) -> Option<&'a ChainRequestBuilder> {
         if let Some(ref src) = self.src_chain {
             self.context.chains.get(src).map(|chain| &chain.rb)
@@ -573,7 +638,7 @@ pub fn find_pairwise_transfer_channel_ids(
     let channels = json_string
         .split('\n')
         .filter(|s| !s.is_empty())
-        .map(|s| serde_json::from_str(s));
+        .map(serde_json::from_str);
 
     for maybe_channel in channels {
         let channel: QueryChannel = maybe_channel?;
@@ -594,15 +659,15 @@ pub fn find_pairwise_transfer_channel_ids(
         }
     }
 
-    Err(Error::MissingContextVariable(String::from(format!(
+    Err(Error::MissingContextVariable(format!(
         "channel_ids::{src_chain_id}-{dest_chain_id}"
-    ))))
+    )))
 }
 
 pub fn find_pairwise_ccv_channel_ids(
     provider_channels: &[Channel],
     consumer_channels: &[Channel],
-) -> StdResult<(PairwiseChannelResult, PairwiseChannelResult)> {
+) -> Result<(PairwiseChannelResult, PairwiseChannelResult), Error> {
     for (a_i, a_chan) in provider_channels.iter().enumerate() {
         for (b_i, b_chan) in consumer_channels.iter().enumerate() {
             if a_chan.channel_id == b_chan.counterparty.channel_id
@@ -626,8 +691,8 @@ pub fn find_pairwise_ccv_channel_ids(
             }
         }
     }
-    Err(StdError::generic_err(
-        "failed to match pairwise ccv channels",
+    Err(Error::MissingContextVariable(
+        "Failed to match ccv channels".to_string(),
     ))
 }
 
