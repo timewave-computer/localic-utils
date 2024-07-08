@@ -2,7 +2,7 @@ use localic_std::{errors::LocalError, transactions::ChainRequestBuilder};
 use log::info;
 use serde_json::Value;
 
-use crate::{utils::test_context::TestContext, DEFAULT_KEY, STRIDE_CHAIN_ID};
+use crate::{utils::test_context::TestContext, ADMIN_KEY, STRIDE_CHAIN_ID};
 
 pub fn set_up_host_zone(test_ctx: &mut TestContext, dest_chain_id: &str) {
     let native_denom = test_ctx.get_native_denom().src(dest_chain_id).get().clone();
@@ -35,7 +35,7 @@ pub fn set_up_host_zone(test_ctx: &mut TestContext, dest_chain_id: &str) {
             &test_ctx.get_chain_prefix().src(dest_chain_id).get(),
             &host_denom_on_stride,
             &stride_to_host_channel_id,
-            DEFAULT_KEY,
+            ADMIN_KEY,
         )
         .unwrap();
     }

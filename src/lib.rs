@@ -58,6 +58,7 @@ pub const PRICE_ORACLE_NAME: &str = "price_oracle";
 pub const LOCAL_IC_API_URL: &str = "http://localhost:42069/";
 
 /// Builder defautls
+pub const ADMIN_KEY: &str = "admin";
 pub const DEFAULT_KEY: &str = "acc0";
 pub const DEFAULT_TRANSFER_PORT: &str = "transfer";
 pub const DEFAULT_AUCTION_LABEL: &str = "auction";
