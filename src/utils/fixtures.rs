@@ -292,8 +292,8 @@ impl TestContext {
     pub fn get_ibc_denom(&mut self, base_denom: &str, src_chain: &str, dest_chain: &str) -> String {
         let channel_id = self
             .get_transfer_channels()
-            .src(dest_chain)
-            .dest(src_chain)
+            .src(src_chain)
+            .dest(dest_chain)
             .get();
 
         let prefixed_denom = get_prefixed_denom(
