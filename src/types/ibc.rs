@@ -1,14 +1,6 @@
 use crate::TRANSFER_PORT;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use sha2::{Digest, Sha256};
-
-#[derive(Serialize)]
-pub struct Trace {
-    pub channel_id: String,
-    pub port_id: String,
-    pub base_denom: String,
-    pub dest_denom: String,
-}
 
 #[derive(Deserialize)]
 pub struct Channel {
@@ -47,6 +39,10 @@ impl DenomTrace {
         hasher.update(trace.as_bytes());
         format!("{:x}", hasher.finalize()).to_uppercase()
     }
+}
+
+pub fn get_prefixed_denom(port_id: String, channel_id: String, native_denom: String) -> String {
+    format!("{}/{}/{}", port_id, channel_id, native_denom)
 }
 
 pub fn get_multihop_ibc_denom(native_denom: &str, channel_trace: Vec<&str>) -> String {

@@ -7,9 +7,7 @@ use crate::{utils::test_context::TestContext, ADMIN_KEY, STRIDE_CHAIN_NAME};
 pub fn set_up_host_zone(test_ctx: &mut TestContext, dest_chain: &str) {
     let native_denom = test_ctx.get_native_denom().src(dest_chain).get().clone();
 
-    let host_denom_on_stride = test_ctx
-        .get_ibc_denom(native_denom, dest_chain, STRIDE_CHAIN_NAME)
-        .unwrap();
+    let host_denom_on_stride = test_ctx.get_ibc_denom(&native_denom, STRIDE_CHAIN_NAME, dest_chain);
 
     let stride = test_ctx.get_chain(STRIDE_CHAIN_NAME);
     let stride_rb = &stride.rb;
