@@ -3,7 +3,13 @@ use super::{
     test_context::TestContext,
 };
 use localic_std::modules::cosmwasm::CosmWasm;
-use std::{ffi::OsStr, fs};
+use log::{error, info};
+use std::{
+    collections::HashMap,
+    ffi::OsStr,
+    fs::{self, File},
+    io::{Read, Write},
+};
 
 /// A tx uploading contract artifacts.
 pub struct UploadContractsTxBuilder<'a> {
@@ -23,6 +29,22 @@ impl<'a> UploadContractsTxBuilder<'a> {
         self.test_ctx.tx_upload_contracts(
             self.key
                 .ok_or(Error::MissingBuilderParam(String::from("key")))?,
+        )
+    }
+
+    /// Sends the transaction using a path, chain and local cache path
+    pub fn send_with_local_cache(
+        &mut self,
+        path: &str,
+        chain_name: &str,
+        local_cache_path: &str,
+    ) -> Result<(), Error> {
+        self.test_ctx.tx_upload_contracts_with_local_cache(
+            self.key
+                .ok_or(Error::MissingBuilderParam(String::from("key")))?,
+            path,
+            chain_name,
+            local_cache_path,
         )
     }
 }
@@ -61,5 +83,81 @@ impl TestContext {
 
                 Ok(())
             })
+    }
+
+    fn tx_upload_contracts_with_local_cache(
+        &mut self,
+        key: &str,
+        path: &str,
+        chain_name: &str,
+        local_cache_path: &str,
+    ) -> Result<(), Error> {
+        if fs::metadata(path).is_ok_and(|m| m.is_dir()) {
+            info!("Path {} exists, deploying contracts...", path);
+        } else {
+            error!(
+                "Path {} does not exist, you might have to build and optimize contracts",
+                path
+            );
+            return Err(Error::Misc(String::from("Path does not exist")));
+        };
+
+        let artifacts = fs::read_dir(path).unwrap();
+
+        let mut dir_entries = vec![];
+        for dir in artifacts.into_iter() {
+            dir_entries.push(dir.unwrap());
+        }
+
+        // Use a local cache to avoid storing the same contract multiple times, useful for local testing
+        let mut content = String::new();
+        let cache: HashMap<String, u64> = match File::open(local_cache_path) {
+            Ok(mut file) => {
+                if let Err(err) = file.read_to_string(&mut content) {
+                    error!("Failed to read cache file: {}", err);
+                    HashMap::new()
+                } else {
+                    serde_json::from_str(&content).unwrap_or_default()
+                }
+            }
+            Err(_) => {
+                // If the file does not exist, we'll create it later
+                HashMap::new()
+            }
+        };
+
+        let local_chain = self.get_mut_chain(chain_name);
+        // Add all cache entries to the local chain
+        for (id, code_id) in cache {
+            local_chain.contract_codes.insert(id, code_id);
+        }
+
+        for entry in dir_entries {
+            let path = entry.path();
+            if path.extension().and_then(|e| e.to_str()) == Some(WASM_EXTENSION) {
+                let abs_path = path.canonicalize().unwrap();
+                let mut cw = CosmWasm::new(&local_chain.rb);
+                let id = abs_path.file_stem().unwrap().to_str().unwrap();
+
+                // To avoid storing multiple times during the same execution
+                if local_chain.contract_codes.contains_key(id) {
+                    info!(
+                        "Contract {} already deployed on chain {}, skipping...",
+                        id, chain_name
+                    );
+                    continue;
+                }
+
+                let code_id = cw.store(key, abs_path.as_path()).unwrap();
+
+                local_chain.contract_codes.insert(id.to_string(), code_id);
+            }
+        }
+
+        let contract_codes = serde_json::to_string(&local_chain.contract_codes).unwrap();
+        let mut file = File::create(local_cache_path).unwrap();
+        file.write_all(contract_codes.as_bytes()).unwrap();
+
+        Ok(())
     }
 }
