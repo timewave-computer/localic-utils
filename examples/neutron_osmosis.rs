@@ -15,7 +15,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_artifacts_dir("contracts")
         .with_chain(ConfigChainBuilder::default_neutron().build()?)
         .with_chain(ConfigChainBuilder::default_osmosis().build()?)
-        .with_transfer_channel("osmosis", "neutron")
+        .with_transfer_channels("osmosis", "neutron")
         .build()?;
 
     ctx.build_tx_create_tokenfactory_token()

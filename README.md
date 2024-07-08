@@ -42,8 +42,8 @@ For a full list of builder calls available under the `TestContextBuilder`, see [
 * `.with_api_url(api_url: impl Into<String>)`
 * `.with_chain(chain: ConfigChain)`
   * The `TestContext` is not configured to use any chains by default. Calling this builder method adds a `ConfigChain`, which grants the `TestContext` access to that chain's related helper functions. These helper functions will error without access to their requisite chains.
-* `.with_transfer_channel(chain_a: impl Into<String>, chain_b: impl Into<String>)`
-  * Registers a transfer channel ID upon building the `TestContext` between chain A and chain B. Assumes that chain A and chain B are chains registered with `.with_chain`
+* `.with_transfer_channels(chain_a: impl Into<String>, chain_b: impl Into<String>)`
+  * Registers transfer channels IDs upon building the `TestContext` between chain A and chain B. Assumes that chain A and chain B are chains registered with `.with_chain`
 * `.with_unwrap_raw_logs(unwrap_logs: bool)`
   * Enables or disables log unwrapping - an assertion upon every `tx_*` helper function's execution that ensures no errors are present in logs returned by the transaction
 

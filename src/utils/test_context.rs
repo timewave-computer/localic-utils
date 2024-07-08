@@ -87,7 +87,7 @@ impl TestContextBuilder {
     }
 
     /// Inserts a transfer channel between the specified chains in both directions.
-    pub fn with_transfer_channel(
+    pub fn with_transfer_channels(
         &mut self,
         chain_a: impl Into<String> + std::marker::Copy,
         chain_b: impl Into<String> + std::marker::Copy,
@@ -102,7 +102,7 @@ impl TestContextBuilder {
     }
 
     // Inserts a ccv channel b etween the specified chains in both directions.
-    pub fn with_ccv_channel(
+    pub fn with_ccv_channels(
         &mut self,
         chain_a: impl Into<String> + std::marker::Copy,
         chain_b: impl Into<String> + std::marker::Copy,
