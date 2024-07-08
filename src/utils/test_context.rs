@@ -257,7 +257,6 @@ impl TestContextBuilder {
 
         let mut transfer_channel_ids = transfer_channel_ids.clone();
         let mut connection_ids = connection_ids.clone();
-        let mut ibc_denoms = ibc_denoms.clone();
 
         for (chain_a, chain_b) in transfer_channels {
             let chain_a_chain = chains
@@ -278,7 +277,6 @@ impl TestContextBuilder {
                 conns.0.channel_id.clone(),
             );
             connection_ids.insert((chain_a.clone(), chain_b.clone()), conns.0.connection_id);
-            ibc_denoms.insert((chain_a.clone(), chain_b.clone()), conns.0.channel_id);
         }
 
         let mut ccv_channel_ids = ccv_channel_ids.clone();

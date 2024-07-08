@@ -2,11 +2,15 @@ use localic_std::{errors::LocalError, transactions::ChainRequestBuilder};
 use log::info;
 use serde_json::Value;
 
-use crate::{
-    types::ibc::get_ibc_denom, utils::test_context::TestContext, DEFAULT_KEY, STRIDE_CHAIN_ID,
-};
+use crate::{utils::test_context::TestContext, DEFAULT_KEY, STRIDE_CHAIN_ID};
 
 pub fn set_up_host_zone(test_ctx: &mut TestContext, dest_chain_id: &str) {
+    let native_denom = test_ctx.get_native_denom().src(dest_chain_id).get().clone();
+
+    let host_denom_on_stride = test_ctx
+        .get_ibc_denom(native_denom, STRIDE_CHAIN_ID, dest_chain_id)
+        .unwrap();
+
     let stride = test_ctx.get_chain(STRIDE_CHAIN_ID);
     let stride_rb = &stride.rb;
 
@@ -15,11 +19,6 @@ pub fn set_up_host_zone(test_ctx: &mut TestContext, dest_chain_id: &str) {
         .src(STRIDE_CHAIN_ID)
         .dest(dest_chain_id)
         .get();
-
-    let host_denom_on_stride = get_ibc_denom(
-        &test_ctx.get_native_denom().src(dest_chain_id).get(),
-        &stride_to_host_channel_id,
-    );
 
     if query_host_zone(stride_rb, dest_chain_id) {
         info!("Host zone registered.");

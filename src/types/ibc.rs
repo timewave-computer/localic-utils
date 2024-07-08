@@ -1,9 +1,5 @@
 use crate::TRANSFER_PORT;
-use cosmwasm_std::Coin;
-use localic_std::{errors::LocalError, transactions::ChainRequestBuilder};
-use log::info;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use sha2::{Digest, Sha256};
 
 #[derive(Serialize)]
@@ -53,18 +49,6 @@ impl DenomTrace {
     }
 }
 
-pub fn get_ibc_denom(native_denom: &str, channel_id: &str) -> String {
-    let prefixed_denom = get_prefixed_denom(
-        TRANSFER_PORT.to_string(),
-        channel_id.to_string(),
-        native_denom.to_string(),
-    );
-
-    let src_denom_trace = parse_denom_trace(prefixed_denom);
-
-    src_denom_trace.ibc_denom()
-}
-
 pub fn get_multihop_ibc_denom(native_denom: &str, channel_trace: Vec<&str>) -> String {
     let mut port_channel_trace = vec![];
 
@@ -77,10 +61,6 @@ pub fn get_multihop_ibc_denom(native_denom: &str, channel_trace: Vec<&str>) -> S
 
     let src_denom_trace = parse_denom_trace(prefixed_denom);
     src_denom_trace.ibc_denom()
-}
-
-pub fn get_prefixed_denom(port_id: String, channel_id: String, native_denom: String) -> String {
-    format!("{}/{}/{}", port_id, channel_id, native_denom)
 }
 
 pub fn parse_denom_trace(raw_denom: String) -> DenomTrace {
@@ -116,22 +96,4 @@ pub fn extract_path_and_base_from_full_denom(full_denom_items: Vec<&str>) -> (St
     }
 
     (path.join("/"), base_denom.join("/"))
-}
-
-pub fn ibc_send(
-    rb: &ChainRequestBuilder,
-    from_key: &str,
-    to_address: &str,
-    token: Coin,
-    fee: Coin,
-    channel: &str,
-    memo: Option<&str>,
-) -> Result<Value, LocalError> {
-    let str_coin = format!("{}{}", token.amount, token.denom);
-    let fee_coin = format!("{}{}", fee.amount, fee.denom);
-    let memo_str = memo.unwrap_or_default();
-    let cmd =
-        format!("tx ibc-transfer transfer {TRANSFER_PORT} {channel} {to_address} {str_coin} --fees={fee_coin} --from={from_key} --memo {memo_str} --output=json");
-    info!("submitting IBC transaction: \n{cmd}\n");
-    rb.tx(&cmd, true)
 }
