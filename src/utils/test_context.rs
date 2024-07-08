@@ -272,10 +272,8 @@ impl TestContextBuilder {
                 &chain_b_chain.rb.chain_id,
             )?;
 
-            transfer_channel_ids.insert(
-                (chain_a.clone(), chain_b.clone()),
-                conns.channel_id.clone(),
-            );
+            transfer_channel_ids
+                .insert((chain_a.clone(), chain_b.clone()), conns.channel_id.clone());
             connection_ids.insert((chain_a.clone(), chain_b.clone()), conns.connection_id);
 
             let conns = find_pairwise_transfer_channel_ids(
@@ -284,10 +282,8 @@ impl TestContextBuilder {
                 &chain_a_chain.rb.chain_id,
             )?;
 
-            transfer_channel_ids.insert(
-                (chain_b.clone(), chain_a.clone()),
-                conns.channel_id.clone(),
-            );
+            transfer_channel_ids
+                .insert((chain_b.clone(), chain_a.clone()), conns.channel_id.clone());
             connection_ids.insert((chain_b.clone(), chain_a.clone()), conns.connection_id);
         }
 

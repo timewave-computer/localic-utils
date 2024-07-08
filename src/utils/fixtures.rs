@@ -290,6 +290,13 @@ impl TestContext {
 
     /// Gets the IBC denom for a base denom given a src and dest chain.
     pub fn get_ibc_denom(&mut self, base_denom: &str, src_chain: &str, dest_chain: &str) -> String {
+        if let Some(denom) = self
+            .ibc_denoms
+            .get(&(base_denom.to_string(), dest_chain.to_string()))
+        {
+            return denom.clone();
+        }
+
         let channel_id = self
             .get_transfer_channels()
             .src(dest_chain)
@@ -303,7 +310,17 @@ impl TestContext {
         );
 
         let src_denom_trace = parse_denom_trace(prefixed_denom);
+        let ibc_denom = src_denom_trace.ibc_denom();
 
-        src_denom_trace.ibc_denom()
+        self.ibc_denoms.insert(
+            (base_denom.to_string(), dest_chain.to_string()),
+            ibc_denom.clone(),
+        );
+        self.ibc_denoms.insert(
+            (ibc_denom.clone(), src_chain.to_string()),
+            base_denom.to_string(),
+        );
+
+        ibc_denom
     }
 }
