@@ -1,8 +1,13 @@
+use crate::{
+    types::ibc::{get_prefixed_denom, parse_denom_trace},
+    TRANSFER_PORT,
+};
+
 use super::{
     super::{
-        error::Error, types::ibc::Trace, AUCTION_CONTRACT_NAME, FACTORY_NAME, NEUTRON_CHAIN_NAME,
-        OSMOSIS_CHAIN_NAME, PAIR_NAME, PRICE_ORACLE_NAME, STABLE_PAIR_NAME,
-        TX_HASH_QUERY_PAUSE_SEC, TX_HASH_QUERY_RETRIES,
+        error::Error, AUCTION_CONTRACT_NAME, FACTORY_NAME, NEUTRON_CHAIN_NAME, OSMOSIS_CHAIN_NAME,
+        PAIR_NAME, PRICE_ORACLE_NAME, STABLE_PAIR_NAME, TX_HASH_QUERY_PAUSE_SEC,
+        TX_HASH_QUERY_RETRIES,
     },
     test_context::TestContext,
 };
@@ -37,7 +42,7 @@ impl TestContext {
 
         let raw_log = logs.as_ref().and_then(|raw_log| raw_log.as_str()).unwrap();
 
-        if &raw_log == &"" {
+        if raw_log.is_empty() {
             return Ok(());
         }
 
@@ -89,7 +94,7 @@ impl TestContext {
         Ok(CosmWasm::new_from_existing(
             &neutron.rb,
             Some(contract_info.artifact_path.clone()),
-            Some(contract_info.code_id.clone()),
+            Some(contract_info.code_id),
             Some(contract_info.address.clone()),
         ))
     }
@@ -102,7 +107,7 @@ impl TestContext {
         let contract_addr = neutron
             .contract_addrs
             .get(PRICE_ORACLE_NAME)
-            .and_then(|addrs| addrs.get(0))
+            .and_then(|addrs| addrs.first())
             .cloned()
             .ok_or(Error::MissingContextVariable(String::from(
                 "contract_addrs::price_oracle",
@@ -165,7 +170,7 @@ impl TestContext {
         let artifacts_path = self.artifacts_dir.as_str();
 
         Ok(contract_addrs
-            .into_iter()
+            .iter()
             .map(|addr| {
                 CosmWasm::new_from_existing(
                     &neutron.rb,
@@ -187,7 +192,7 @@ impl TestContext {
     ) -> Result<CosmWasm, Error> {
         let factories = self.get_astroport_factory()?;
         let factory = factories
-            .get(0)
+            .first()
             .ok_or(Error::MissingContextVariable(String::from(FACTORY_NAME)))?;
 
         let pair_info = factory.query_value(&serde_json::json!(
@@ -284,71 +289,38 @@ impl TestContext {
     }
 
     /// Gets the IBC denom for a base denom given a src and dest chain.
-    pub fn get_ibc_denom(
-        &mut self,
-        base_denom: impl AsRef<str>,
-        src_chain: impl Into<String>,
-        dest_chain: impl Into<String>,
-    ) -> Option<String> {
-        let src_chain_string = src_chain.into();
-        let dest_chain_string = dest_chain.into();
-        let base_denom_str = base_denom.as_ref();
-
+    pub fn get_ibc_denom(&mut self, base_denom: &str, src_chain: &str, dest_chain: &str) -> String {
         if let Some(denom) = self
             .ibc_denoms
-            .get(&(base_denom_str.into(), dest_chain_string.clone()))
+            .get(&(base_denom.to_string(), dest_chain.to_string()))
         {
-            return Some(denom.clone());
+            return denom.clone();
         }
 
-        let dest_chain = self.get_chain(&dest_chain_string);
+        let channel_id = self
+            .get_transfer_channels()
+            .src(dest_chain)
+            .dest(src_chain)
+            .get();
 
-        let channel = self
-            .transfer_channel_ids
-            .get(&(dest_chain_string.clone(), src_chain_string.clone()))?;
-        let trace = format!("transfer/{}/{}", channel, base_denom_str);
-
-        let resp = dest_chain
-            .rb
-            .q(&format!("q ibc-transfer denom-hash {trace}"), true);
-
-        let ibc_denom = format!(
-            "ibc/{}",
-            serde_json::from_str::<Value>(&resp.get("text")?.as_str()?)
-                .ok()?
-                .get("hash")?
-                .as_str()?
+        let prefixed_denom = get_prefixed_denom(
+            TRANSFER_PORT.to_string(),
+            channel_id.to_string(),
+            base_denom.to_string(),
         );
+
+        let src_denom_trace = parse_denom_trace(prefixed_denom);
+        let ibc_denom = src_denom_trace.ibc_denom();
 
         self.ibc_denoms.insert(
-            (base_denom_str.into(), dest_chain_string.clone()),
+            (base_denom.to_string(), dest_chain.to_string()),
             ibc_denom.clone(),
         );
-        self.ibc_denoms
-            .insert((ibc_denom.clone(), src_chain_string), base_denom_str.into());
+        self.ibc_denoms.insert(
+            (ibc_denom.clone(), src_chain.to_string()),
+            base_denom.to_string(),
+        );
 
-        Some(ibc_denom)
-    }
-
-    /// Gets the IBC channel and port for a given denom.
-    pub fn get_ibc_trace(
-        &mut self,
-        base_denom: impl Into<String> + AsRef<str>,
-        src_chain: impl Into<String> + AsRef<str>,
-        dest_chain: impl Into<String> + AsRef<str>,
-    ) -> Option<Trace> {
-        let dest_denom =
-            self.get_ibc_denom(base_denom.as_ref(), src_chain.as_ref(), dest_chain.as_ref())?;
-
-        let channel = self
-            .transfer_channel_ids
-            .get(&(src_chain.into(), dest_chain.into()))?;
-
-        Some(Trace {
-            port_id: "transfer".to_owned(),
-            channel_id: channel.to_owned(),
-            base_denom: base_denom.into(),
-            dest_denom,
-        })
+        ibc_denom
     }
 }

@@ -14,7 +14,15 @@ pub const TRANSFER_PORT: &str = "transfer";
 /// File extension for WASM files
 pub const WASM_EXTENSION: &str = "wasm";
 
+// Gaia chain info
+pub const GAIA_CHAIN_ID: &str = "localcosmos-1";
+pub const GAIA_CHAIN_NAME: &str = "gaia";
+pub const GAIA_CHAIN_PREFIX: &str = "cosmos";
+pub const GAIA_CHAIN_DENOM: &str = "uatom";
+pub const GAIA_CHAIN_ADMIN_ADDR: &str = "cosmos1hj5fveer5cjtn4wd6wstzugjfdxzl0xpxvjjvr";
+
 /// Neutron chain info
+pub const NEUTRON_CHAIN_ID: &str = "localneutron-1";
 pub const NEUTRON_CHAIN_NAME: &str = "neutron";
 pub const NEUTRON_CHAIN_PREFIX: &str = "neutron";
 pub const NEUTRON_CHAIN_DENOM: &str = "untrn";
@@ -50,10 +58,10 @@ pub const PRICE_ORACLE_NAME: &str = "price_oracle";
 pub const LOCAL_IC_API_URL: &str = "http://localhost:42069/";
 
 /// Builder defautls
+pub const ADMIN_KEY: &str = "admin";
 pub const DEFAULT_KEY: &str = "acc0";
 pub const DEFAULT_TRANSFER_PORT: &str = "transfer";
 pub const DEFAULT_AUCTION_LABEL: &str = "auction";
-pub const DEFAULT_NEUTRON_CHAIN_ID: &str = "localneutron-1";
 
 pub const TX_HASH_QUERY_RETRIES: u16 = 5;
 pub const TX_HASH_QUERY_PAUSE_SEC: u64 = 2;

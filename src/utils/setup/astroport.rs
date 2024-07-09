@@ -308,7 +308,7 @@ impl TestContext {
         let native_registry_addr = neutron
             .contract_addrs
             .get(TOKEN_REGISTRY_NAME)
-            .and_then(|maybe_addr| maybe_addr.get(0))
+            .and_then(|maybe_addr| maybe_addr.first())
             .ok_or(Error::MissingContextVariable(String::from(
                 "contract_ddrs::astroport_native_coin_registry",
             )))?;
@@ -385,7 +385,7 @@ impl TestContext {
         // Factory contract instance
         let contracts = self.get_astroport_factory()?;
         let contract_a = contracts
-            .get(0)
+            .first()
             .ok_or(Error::MissingContextVariable(String::from(FACTORY_NAME)))?;
 
         // Create the pair
@@ -412,7 +412,7 @@ impl TestContext {
             "transaction did not produce a tx hash",
         )))?;
 
-        let _ = self.guard_tx_errors(NEUTRON_CHAIN_NAME, tx_hash.as_str())?;
+        self.guard_tx_errors(NEUTRON_CHAIN_NAME, tx_hash.as_str())?;
 
         Ok(())
     }
@@ -432,6 +432,7 @@ impl TestContext {
     }
 
     /// Provides liquidity for a specific astroport pool.
+    #[allow(clippy::too_many_arguments)]
     fn tx_fund_pool(
         &mut self,
         key: &str,
@@ -478,7 +479,7 @@ impl TestContext {
             .tx_hash
             .ok_or(Error::TxMissingLogs)?;
 
-        let _ = self.guard_tx_errors(NEUTRON_CHAIN_NAME, tx.as_str())?;
+        self.guard_tx_errors(NEUTRON_CHAIN_NAME, tx.as_str())?;
 
         Ok(())
     }

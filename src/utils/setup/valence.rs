@@ -455,7 +455,7 @@ impl TestContext {
 
     /// Creates an auction manager on Neutron, updating the autions manager
     /// code id and address in the TestContext.
-    fn tx_create_price_oracle<'a>(
+    fn tx_create_price_oracle(
         &mut self,
         sender_key: &str,
         seconds_allow_manual_change: u64,
@@ -496,7 +496,7 @@ impl TestContext {
     }
 
     /// Creates an auction on Neutron. Requires that an auction manager has already been deployed.
-    pub fn build_tx_create_auction<'a>(&mut self) -> CreateAuctionTxBuilder {
+    pub fn build_tx_create_auction(&mut self) -> CreateAuctionTxBuilder {
         CreateAuctionTxBuilder {
             key: DEFAULT_KEY,
             offer_asset: Default::default(),
@@ -520,7 +520,8 @@ impl TestContext {
     }
 
     /// Creates an auction on Neutron. Requires that an auction manager has already been deployed.
-    fn tx_create_auction<'a, TDenomA: AsRef<str>, TDenomB: AsRef<str>>(
+    #[allow(clippy::too_many_arguments)]
+    fn tx_create_auction<TDenomA: AsRef<str>, TDenomB: AsRef<str>>(
         &mut self,
         sender_key: &str,
         pair: (TDenomA, TDenomB),
@@ -561,7 +562,7 @@ impl TestContext {
             receipt
         );
 
-        let _ = self.guard_tx_errors(
+        self.guard_tx_errors(
             NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
@@ -570,7 +571,7 @@ impl TestContext {
     }
 
     /// Creates an auction on Neutron. Requires that an auction manager has already been deployed.
-    pub fn build_tx_migrate_auction<'a>(&mut self) -> MigrateAuctionTxBuilder {
+    pub fn build_tx_migrate_auction(&mut self) -> MigrateAuctionTxBuilder {
         MigrateAuctionTxBuilder {
             key: DEFAULT_KEY,
             offer_asset: Default::default(),
@@ -580,7 +581,7 @@ impl TestContext {
     }
 
     /// Creates an auction on Neutron. Requires that an auction manager has already been deployed.
-    fn tx_migrate_auction<'a, TDenomA: AsRef<str>, TDenomB: AsRef<str>>(
+    fn tx_migrate_auction<TDenomA: AsRef<str>, TDenomB: AsRef<str>>(
         &mut self,
         sender_key: &str,
         pair: (TDenomA, TDenomB),
@@ -606,7 +607,7 @@ impl TestContext {
             }})
             .to_string()
             .as_str(),
-            format!("--gas 2000000").as_str(),
+            "--gas 2000000",
         )?;
 
         log::debug!(
@@ -616,7 +617,7 @@ impl TestContext {
             receipt
         );
 
-        let _ = self.guard_tx_errors(
+        self.guard_tx_errors(
             NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
@@ -639,7 +640,7 @@ impl TestContext {
         let oracle = neutron
             .contract_addrs
             .get(PRICE_ORACLE_NAME)
-            .and_then(|addrs| addrs.get(0))
+            .and_then(|addrs| addrs.first())
             .ok_or(Error::MissingContextVariable(String::from(
                 "contract_addrs::price_oracle",
             )))?;
@@ -655,10 +656,10 @@ impl TestContext {
             }})
             .to_string()
             .as_str(),
-            format!("--gas 2000000").as_str(),
+            "--gas 2000000",
         )?;
 
-        let _ = self.guard_tx_errors(
+        self.guard_tx_errors(
             NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
@@ -698,10 +699,10 @@ impl TestContext {
             })
             .to_string()
             .as_str(),
-            format!("--gas 2000000").as_str(),
+            "--gas 2000000",
         )?;
 
-        let _ = self.guard_tx_errors(
+        self.guard_tx_errors(
             NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
@@ -743,7 +744,7 @@ impl TestContext {
             format!("--amount {amt_offer_asset}{denom_a} --gas 1000000").as_str(),
         )?;
 
-        let _ = self.guard_tx_errors(
+        self.guard_tx_errors(
             NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;
@@ -808,7 +809,7 @@ impl TestContext {
             "--gas 1000000",
         )?;
 
-        let _ = self.guard_tx_errors(
+        self.guard_tx_errors(
             NEUTRON_CHAIN_NAME,
             receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
         )?;

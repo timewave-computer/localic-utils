@@ -1,4 +1,4 @@
-use localic_utils::{error::Error as LocalIcUtilsError, ConfigChainBuilder, TestContextBuilder};
+use localic_utils::{ConfigChainBuilder, TestContextBuilder};
 use std::error::Error;
 
 const ACC_0_ADDR: &str = "osmo1hj5fveer5cjtn4wd6wstzugjfdxzl0xpwhpz63";
@@ -15,8 +15,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_artifacts_dir("contracts")
         .with_chain(ConfigChainBuilder::default_neutron().build()?)
         .with_chain(ConfigChainBuilder::default_osmosis().build()?)
-        .with_transfer_channel("osmosis", "neutron")
-        .with_transfer_channel("neutron", "osmosis")
+        .with_transfer_channels("osmosis", "neutron")
         .build()?;
 
     ctx.build_tx_create_tokenfactory_token()
@@ -44,12 +43,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_amount(1000000)
         .send()?;
 
-    let ibc_bruhtoken = ctx.get_ibc_denom(&bruhtoken, "neutron", "osmosis").ok_or(
-        LocalIcUtilsError::MissingContextVariable(format!("ibc_denom::{}", &bruhtoken)),
-    )?;
-    let ibc_neutron = ctx.get_ibc_denom("untrn", "neutron", "osmosis").ok_or(
-        LocalIcUtilsError::MissingContextVariable(format!("ibc_denom::{}", "untrn")),
-    )?;
+    let ibc_bruhtoken = ctx.get_ibc_denom(&bruhtoken, "neutron", "osmosis");
+    let ibc_neutron = ctx.get_ibc_denom("untrn", "neutron", "osmosis");
 
     // Create an osmosis pool
     ctx.build_tx_create_osmo_pool()
