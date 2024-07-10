@@ -58,7 +58,7 @@ impl TestContext {
     pub fn set_up_stride_host_zone(&mut self, dest_chain: &str) {
         let native_denom = self.get_native_denom().src(dest_chain).get().clone();
 
-        let host_denom_on_stride = self.get_ibc_denom(&native_denom, STRIDE_CHAIN_NAME, dest_chain);
+        let host_denom_on_stride = self.get_ibc_denom(&native_denom, dest_chain, STRIDE_CHAIN_NAME);
 
         let stride = self.get_chain(STRIDE_CHAIN_NAME);
         let stride_rb = &stride.rb;
