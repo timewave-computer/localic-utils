@@ -129,7 +129,7 @@ impl TestContext {
         liquid_stake_amount: u128,
     ) -> Result<(), Error> {
         let cmd = format!(
-            "tx liquid-staking stake {} {} --from={} --gas auto --gas-adjustment 1.3 --output=json",
+            "tx stakeibc liquid-stake {} {} --from={} --gas auto --gas-adjustment 1.3 --output=json",
             liquid_stake_denom, liquid_stake_amount, sender_key,
         );
         self.get_chain(STRIDE_CHAIN_NAME).rb.tx(&cmd, true)?;
