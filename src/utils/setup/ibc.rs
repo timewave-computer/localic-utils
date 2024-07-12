@@ -51,6 +51,12 @@ impl<'a> TransferTxBuilder<'a> {
         self
     }
 
+    pub fn with_memo(&mut self, memo: &'a str) -> &mut Self {
+        self.memo = Some(memo);
+
+        self
+    }
+
     /// Sends the built IBC transfer tx.
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_transfer(
