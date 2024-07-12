@@ -9,6 +9,7 @@ pub struct TransferTxBuilder<'a> {
     recipient: Option<&'a str>,
     denom: Option<&'a str>,
     amount: Option<u128>,
+    memo: Option<&'a str>,
     port: &'a str,
     test_ctx: &'a mut TestContext,
 }
@@ -62,6 +63,7 @@ impl<'a> TransferTxBuilder<'a> {
             self.amount
                 .ok_or(Error::MissingBuilderParam(String::from("amount")))?,
             self.port,
+            self.memo,
         )
     }
 }
@@ -75,11 +77,13 @@ impl TestContext {
             recipient: Default::default(),
             denom: Default::default(),
             amount: Default::default(),
+            memo: None,
             port: DEFAULT_TRANSFER_PORT,
             test_ctx: self,
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn tx_transfer(
         &mut self,
         key: &str,
@@ -88,6 +92,7 @@ impl TestContext {
         denom: &str,
         amount: u128,
         port: &str,
+        memo: Option<&str>,
     ) -> Result<(), Error> {
         let dest_chain: &LocalChain = self
             .chains
@@ -106,7 +111,12 @@ impl TestContext {
                 chain.chain_name, dest_chain.chain_name
             )))?;
 
-        let receipt = chain.rb.tx(&format!("tx ibc-transfer transfer {port} {channel} {recipient} {amount}{denom} --fees=100000{fee_denom} --from={key}"), true)?;
+        let memo_part = memo.map(|m| format!(" --memo={}", m)).unwrap_or_default();
+
+        let receipt = chain.rb.tx(&format!(
+            "tx ibc-transfer transfer {port} {channel} {recipient} {amount}{denom} --fees=100000{fee_denom} --from={key}{}",
+            memo_part
+        ), true)?;
 
         self.guard_tx_errors(
             src_chain_name,
