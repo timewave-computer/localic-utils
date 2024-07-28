@@ -363,8 +363,8 @@ pub struct LocalChain {
     pub connection_ids: HashMap<String, String>,
     pub admin_addr: String,
     pub native_denom: String,
-    /// contract addresses for deployed instances of contracts
-    pub contract_addrs: HashMap<String, Vec<String>>,
+    /// contract address for the deployed instance of a contract
+    pub contract_addrs: HashMap<String, String>,
     /// The name of the chain
     pub chain_name: String,
     pub chain_prefix: String,
