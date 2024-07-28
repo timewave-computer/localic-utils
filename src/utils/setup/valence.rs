@@ -437,9 +437,7 @@ impl TestContext {
 
         chain
             .contract_addrs
-            .entry(AUCTIONS_MANAGER_CONTRACT_NAME.to_owned())
-            .or_default()
-            .push(contract.address);
+            .insert(AUCTIONS_MANAGER_CONTRACT_NAME.to_owned(), contract.address);
 
         Ok(())
     }
@@ -488,9 +486,7 @@ impl TestContext {
 
         chain
             .contract_addrs
-            .entry(PRICE_ORACLE_NAME.to_owned())
-            .or_default()
-            .push(contract.address);
+            .insert(PRICE_ORACLE_NAME.to_owned(), contract.address);
 
         Ok(())
     }
@@ -637,13 +633,13 @@ impl TestContext {
         // The auctions manager for this deployment
         let contract_a = self.get_auctions_manager()?;
         let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
-        let oracle = neutron
-            .contract_addrs
-            .get(PRICE_ORACLE_NAME)
-            .and_then(|addrs| addrs.first())
-            .ok_or(Error::MissingContextVariable(String::from(
-                "contract_addrs::price_oracle",
-            )))?;
+        let oracle =
+            neutron
+                .contract_addrs
+                .get(PRICE_ORACLE_NAME)
+                .ok_or(Error::MissingContextVariable(String::from(
+                    "contract_addrs::price_oracle",
+                )))?;
 
         let receipt = contract_a.execute(
             sender_key,
