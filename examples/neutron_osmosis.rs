@@ -18,6 +18,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_transfer_channels("osmosis", "neutron")
         .build()?;
 
+    // Kill and restart the relayer
+    ctx.stop_relayer();
+    ctx.start_relayer();
+
     ctx.build_tx_create_tokenfactory_token()
         .with_chain_name("neutron")
         .with_subdenom("bruhtoken")

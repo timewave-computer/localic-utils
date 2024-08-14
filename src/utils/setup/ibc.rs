@@ -1,5 +1,7 @@
 use super::super::{
-    super::{error::Error, DEFAULT_KEY, DEFAULT_TRANSFER_PORT, NEUTRON_CHAIN_NAME},
+    super::{
+        error::Error, DEFAULT_KEY, DEFAULT_TRANSFER_PORT, NEUTRON_CHAIN_ID, NEUTRON_CHAIN_NAME,
+    },
     test_context::{LocalChain, TestContext},
 };
 
@@ -133,5 +135,25 @@ impl TestContext {
         )?;
 
         Ok(())
+    }
+
+    pub fn start_relayer(&mut self) {
+        let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
+
+        reqwest::blocking::Client::default()
+            .post(&neutron.rb.api)
+            .json(&serde_json::json!({ "chain_id": NEUTRON_CHAIN_ID, "action": "start-relayer"}))
+            .send()
+            .unwrap();
+    }
+
+    pub fn stop_relayer(&mut self) {
+        let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
+
+        reqwest::blocking::Client::default()
+            .post(&neutron.rb.api)
+            .json(&serde_json::json!({ "chain_id": NEUTRON_CHAIN_ID, "action": "stop-relayer"}))
+            .send()
+            .unwrap();
     }
 }
