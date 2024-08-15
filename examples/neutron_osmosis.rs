@@ -1,5 +1,5 @@
 use localic_utils::{ConfigChainBuilder, TestContextBuilder};
-use std::error::Error;
+use std::{error::Error, thread, time::Duration};
 
 const ACC_0_ADDR: &str = "osmo1hj5fveer5cjtn4wd6wstzugjfdxzl0xpwhpz63";
 const NEUTRON_ACC_0_ADDR: &str = "neutron1hj5fveer5cjtn4wd6wstzugjfdxzl0xpznmsky";
@@ -17,6 +17,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_chain(ConfigChainBuilder::default_osmosis().build()?)
         .with_transfer_channels("osmosis", "neutron")
         .build()?;
+
+    // Kill and restart the relayer
+    ctx.stop_relayer();
+    ctx.start_relayer();
+
+    // Wait for the relayer to start up
+    thread::sleep(Duration::from_secs(10));
 
     ctx.build_tx_create_tokenfactory_token()
         .with_chain_name("neutron")
