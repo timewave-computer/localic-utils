@@ -25,6 +25,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Wait for the relayer to start up
     thread::sleep(Duration::from_secs(10));
 
+    // Wait for some blocks
+    ctx.get_chain("neutron").wait_for_blocks(20);
+
     ctx.build_tx_create_tokenfactory_token()
         .with_chain_name("neutron")
         .with_subdenom("bruhtoken")
