@@ -216,4 +216,4 @@ Note that most `tx_*` helper functions expose a `.with_key(key: &str)` builder f
 
 ### Complete Example
 
-Examples of using almost every helper function provided by this repository are available in the [examples](https://github.com/timewave-computer/tree/main/examples) directory.
+Examples of using almost every helper function provided by this repository are available in the [examples](https://github.com/timewave-computer/localic-utils/tree/main/examples) directory.
