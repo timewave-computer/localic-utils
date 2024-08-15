@@ -124,5 +124,23 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_liq_token_receiver(ACC_0_ADDR)
         .send()?;
 
+    let factory_contract_code_id = ctx
+        .get_contract("astroport_whitelist")
+        .unwrap()
+        .code_id
+        .unwrap();
+
+    // Instantiate a contract predictably
+    ctx.build_tx_instantiate2()
+        .with_code_id(factory_contract_code_id)
+        .with_msg(serde_json::json!({
+            "admins": [],
+            "mutable": false,
+        }))
+        .with_salt(hex::encode("examplesalt").as_str())
+        .with_label("test_contract")
+        .send()
+        .unwrap();
+
     Ok(())
 }
