@@ -405,6 +405,7 @@ impl LocalChain {
 
     pub fn wait_for_blocks(&self, blocks: u64) {
         let chain = Chain::new(&self.rb);
+        let current_height = chain.get_height();
 
         while chain.get_height() < current_height + blocks {
             std::thread::sleep(std::time::Duration::from_millis(500));
