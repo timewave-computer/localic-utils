@@ -125,18 +125,18 @@ impl TestContext {
 
         // Optional flags
         let admin_part = admin
-            .map(|admin| format!("--admin {admin}"))
-            .unwrap_or(String::from("--no-admin"));
+            .map(|admin| format!("--admin {admin} "))
+            .unwrap_or(String::from("--no-admin "));
         let amt_part = funds
-            .map(|funds| format!("--amount {funds}"))
+            .map(|funds| format!("--amount {funds} "))
             .unwrap_or_default();
         let fix_msg_part = fix_msg
-            .map(|fix_msg| format!("--fix_msg {fix_msg}"))
+            .map(|fix_msg| format!("--fix_msg {fix_msg} "))
             .unwrap_or_default();
 
         let receipt = chain.rb.tx(
-            &format!("tx wasm instantiate2 {code_id} {msg} {salt} --label {label} {admin_part} {amt_part} {fix_msg_part} --from {key}"),
-            true,
+            &format!("tx wasm instantiate2 {code_id} {msg} {salt} --label {label} {admin_part}{amt_part}{fix_msg_part}--from {key}"),
+            false,
         )?;
 
         self.guard_tx_errors(
