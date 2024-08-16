@@ -1,13 +1,14 @@
 use super::super::{
     error::Error,
     types::{config::ConfigChain, contract::DeployedContractInfo, ibc::Channel as QueryChannel},
-    LOCAL_IC_API_URL, TRANSFER_PORT,
+    LOCAL_IC_API_URL, NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_NAME, TRANSFER_PORT,
 };
 
 use localic_std::{
     modules::cosmwasm::CosmWasm, relayer::Channel, relayer::Relayer,
     transactions::ChainRequestBuilder,
 };
+use serde_json::Value;
 use std::{collections::HashMap, path::PathBuf};
 
 /// A configurable builder that can be used to create a TestContext.
@@ -435,6 +436,10 @@ impl TestContext {
         TestContextQuery::new(self, QueryType::RequestBuilder)
     }
 
+    pub fn get_built_contract_address(&self) -> TestContextQuery {
+        TestContextQuery::new(self, QueryType::BuiltContractAddress)
+    }
+
     pub fn get_chain(&self, chain_name: &str) -> &LocalChain {
         self.chains.get(chain_name).unwrap()
     }
@@ -453,6 +458,8 @@ pub enum QueryType {
     NativeDenom,
     ChainPrefix,
     RequestBuilder,
+    BuiltContractAddress,
+    CodeInfo,
 }
 
 pub struct TestContextQuery<'a> {
@@ -461,6 +468,10 @@ pub struct TestContextQuery<'a> {
     src_chain: Option<String>,
     dest_chain: Option<String>,
     contract_name: Option<String>,
+
+    // build-contract-address query args
+    creator_address: Option<String>,
+    salt_hex_encoded: Option<String>,
 }
 
 impl<'a> TestContextQuery<'a> {
@@ -471,6 +482,8 @@ impl<'a> TestContextQuery<'a> {
             src_chain: None,
             dest_chain: None,
             contract_name: None,
+            creator_address: None,
+            salt_hex_encoded: None,
         }
     }
 
@@ -489,18 +502,30 @@ impl<'a> TestContextQuery<'a> {
         self
     }
 
+    pub fn creator(mut self, creator_addr: &str) -> Self {
+        self.creator_address = Some(creator_addr.to_owned());
+        self
+    }
+
+    pub fn salt_hex_encoded(mut self, salt_hex_encoded: &str) -> Self {
+        self.salt_hex_encoded = Some(salt_hex_encoded.to_owned());
+        self
+    }
+
     pub fn get(self) -> String {
-        let query_response = match self.query_type {
-            QueryType::TransferChannel => self.get_transfer_channel(),
-            QueryType::Connection => self.get_connection_id(),
-            QueryType::CCVChannel => self.get_ccv_channel(),
-            QueryType::IBCDenom => self.get_ibc_denom(),
-            QueryType::AdminAddr => self.get_admin_addr(),
-            QueryType::NativeDenom => self.get_native_denom(),
-            QueryType::ChainPrefix => self.get_chain_prefix(),
+        match self.query_type {
+            QueryType::TransferChannel => self.get_transfer_channel().map(ToOwned::to_owned),
+            QueryType::Connection => self.get_connection_id().map(ToOwned::to_owned),
+            QueryType::CCVChannel => self.get_ccv_channel().map(ToOwned::to_owned),
+            QueryType::IBCDenom => self.get_ibc_denom().map(ToOwned::to_owned),
+            QueryType::AdminAddr => self.get_admin_addr().map(ToOwned::to_owned),
+            QueryType::NativeDenom => self.get_native_denom().map(ToOwned::to_owned),
+            QueryType::ChainPrefix => self.get_chain_prefix().map(ToOwned::to_owned),
+            QueryType::BuiltContractAddress => self.get_built_contract_address(),
+            QueryType::CodeInfo => self.get_code_info().map(|s| s.to_string()),
             _ => None,
-        };
-        query_response.unwrap()
+        }
+        .unwrap()
     }
 
     pub fn get_all(self) -> Vec<String> {
@@ -509,6 +534,9 @@ impl<'a> TestContextQuery<'a> {
             QueryType::Connection => self.get_all_connections(),
             _ => vec![],
         }
+        .into_iter()
+        .map(ToOwned::to_owned)
+        .collect::<Vec<_>>()
     }
 
     pub fn get_request_builder(mut self, chain: &str) -> &'a ChainRequestBuilder {
@@ -520,110 +548,123 @@ impl<'a> TestContextQuery<'a> {
         rb.unwrap()
     }
 
-    fn get_transfer_channel(self) -> Option<String> {
-        if let (Some(ref src), Some(ref dest)) = (self.src_chain, self.dest_chain) {
-            self.context
-                .transfer_channel_ids
-                .get(&(src.clone(), dest.clone()))
-                .cloned()
-        } else {
-            None
+    fn get_transfer_channel(&self) -> Option<&str> {
+        self.context
+            .transfer_channel_ids
+            .get(&(self.src_chain.clone()?, self.dest_chain.clone()?))
+            .map(|s| s.as_str())
+    }
+
+    fn get_all_transfer_channels(&self) -> Vec<&str> {
+        self.src_chain
+            .as_ref()
+            .map(|src| {
+                self.context
+                    .transfer_channel_ids
+                    .iter()
+                    .filter(|((s, _), _)| s == src)
+                    .map(|(_, v)| v.as_str())
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default()
+    }
+
+    fn get_connection_id(&self) -> Option<&str> {
+        self.context
+            .connection_ids
+            .get(&(self.src_chain.clone()?, self.dest_chain.clone()?))
+            .map(|s| s.as_str())
+    }
+
+    fn get_all_connections(&self) -> Vec<&str> {
+        self.src_chain
+            .as_ref()
+            .map(|src| {
+                self.context
+                    .connection_ids
+                    .iter()
+                    .filter(|((s, _), _)| s == src)
+                    .map(|(_, s)| s.as_str())
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default()
+    }
+
+    fn get_ccv_channel(&self) -> Option<&str> {
+        self.context
+            .ccv_channel_ids
+            .get(&(self.src_chain.clone()?, self.dest_chain.clone()?))
+            .map(|s| s.as_str())
+    }
+
+    fn get_ibc_denom(&self) -> Option<&str> {
+        self.context
+            .ibc_denoms
+            .get(&(self.src_chain.clone()?, self.dest_chain.clone()?))
+            .map(|s| s.as_str())
+    }
+
+    fn get_admin_addr(&self) -> Option<&str> {
+        let src = self.src_chain.as_deref()?;
+
+        Some(self.context.chains.get(src)?.admin_addr.as_ref())
+    }
+
+    fn get_native_denom(&self) -> Option<&str> {
+        let src = self.src_chain.as_deref()?;
+
+        Some(self.context.chains.get(src)?.native_denom.as_ref())
+    }
+
+    fn get_chain_prefix(&self) -> Option<&str> {
+        let src = self.src_chain.as_deref()?;
+
+        Some(self.context.chains.get(src)?.chain_prefix.as_ref())
+    }
+
+    fn get_code_info(&self) -> Option<Value> {
+        let contract = self
+            .context
+            .get_contract(self.contract_name.as_ref()?)
+            .ok()?;
+        let code_id = contract.code_id?;
+        let chain = self
+            .context
+            .chains
+            .get(self.src_chain.as_deref().unwrap_or(NEUTRON_CHAIN_NAME))?;
+
+        // This will produce a { ... text: "{ 'data_hash': xyz }" }. Get the code info enclosed
+        let resp = chain.rb.query(&format!("q wasm code-info {code_id}"), true);
+
+        let str_info_object = resp["text"].as_str()?;
+        serde_json::from_str(str_info_object).ok()
+    }
+
+    fn get_built_contract_address(&self) -> Option<String> {
+        let code_info = self.get_code_info()?;
+        let code_id_hash = code_info["data_hash"].as_str()?;
+
+        let creator_address = NEUTRON_CHAIN_ADMIN_ADDR;
+        let salt = self.salt_hex_encoded.as_deref()?;
+
+        let chain = self
+            .context
+            .chains
+            .get(self.src_chain.as_deref().unwrap_or(NEUTRON_CHAIN_NAME))?;
+
+        // text field contains built address
+        let mut resp = chain.rb.bin(
+            &format!("q wasm build-address {code_id_hash} {creator_address} {salt}"),
+            true,
+        );
+
+        match resp["text"].take() {
+            Value::String(s) => Some(s.replace("\n", "")),
+            _ => None,
         }
     }
 
-    fn get_all_transfer_channels(self) -> Vec<String> {
-        if let Some(ref src) = self.src_chain {
-            self.context
-                .transfer_channel_ids
-                .iter()
-                .filter(|((s, _), _)| s == src)
-                .map(|(_, v)| v.clone())
-                .collect::<Vec<_>>()
-        } else {
-            vec![]
-        }
-    }
-
-    fn get_connection_id(self) -> Option<String> {
-        if let (Some(ref src), Some(ref dest)) = (self.src_chain, self.dest_chain) {
-            self.context
-                .connection_ids
-                .get(&(src.clone(), dest.clone()))
-                .cloned()
-        } else {
-            None
-        }
-    }
-
-    fn get_all_connections(self) -> Vec<String> {
-        if let Some(ref src) = self.src_chain {
-            self.context
-                .connection_ids
-                .iter()
-                .filter(|((s, _), _)| s == src)
-                .map(|(_, v)| v.clone())
-                .collect::<Vec<_>>()
-        } else {
-            vec![]
-        }
-    }
-
-    fn get_ccv_channel(self) -> Option<String> {
-        if let (Some(ref src), Some(ref dest)) = (self.src_chain, self.dest_chain) {
-            self.context
-                .ccv_channel_ids
-                .get(&(src.clone(), dest.clone()))
-                .cloned()
-        } else {
-            None
-        }
-    }
-
-    fn get_ibc_denom(self) -> Option<String> {
-        if let (Some(ref src), Some(ref dest)) = (self.src_chain, self.dest_chain) {
-            self.context
-                .ibc_denoms
-                .get(&(src.clone(), dest.clone()))
-                .cloned()
-        } else {
-            None
-        }
-    }
-
-    fn get_admin_addr(self) -> Option<String> {
-        if let Some(ref src) = self.src_chain {
-            self.context
-                .chains
-                .get(src)
-                .map(|chain| chain.admin_addr.clone())
-        } else {
-            None
-        }
-    }
-
-    fn get_native_denom(self) -> Option<String> {
-        if let Some(ref src) = self.src_chain {
-            self.context
-                .chains
-                .get(src)
-                .map(|chain| chain.native_denom.clone())
-        } else {
-            None
-        }
-    }
-
-    fn get_chain_prefix(self) -> Option<String> {
-        if let Some(ref src) = self.src_chain {
-            self.context
-                .chains
-                .get(src)
-                .map(|chain| chain.chain_prefix.clone())
-        } else {
-            None
-        }
-    }
-
-    fn get_rb(self) -> Option<&'a ChainRequestBuilder> {
+    fn get_rb(&self) -> Option<&'a ChainRequestBuilder> {
         if let Some(ref src) = self.src_chain {
             self.context.chains.get(src).map(|chain| &chain.rb)
         } else {

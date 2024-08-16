@@ -1,5 +1,7 @@
 use cosmwasm_std::Decimal;
-use localic_utils::{types::contract::MinAmount, ConfigChainBuilder, TestContextBuilder};
+use localic_utils::{
+    types::contract::MinAmount, ConfigChainBuilder, TestContextBuilder, DEFAULT_KEY,
+};
 use std::error::Error;
 
 const ACC_0_ADDR: &str = "neutron1hj5fveer5cjtn4wd6wstzugjfdxzl0xpznmsky";
@@ -137,10 +139,27 @@ fn main() -> Result<(), Box<dyn Error>> {
             "admins": [],
             "mutable": false,
         }))
-        .with_salt(hex::encode("examplesalt").as_str())
+        .with_salt_hex_encoded(hex::encode("examplesalt").as_str())
         .with_label("test_contract")
         .send()
         .unwrap();
+
+    let addr = ctx
+        .get_built_contract_address()
+        .contract("astroport_whitelist")
+        .creator(ACC_0_ADDR)
+        .salt_hex_encoded(hex::encode("examplesalt").as_str())
+        .get();
+
+    let mut cw = ctx.get_contract("astroport_whitelist").unwrap();
+    cw.contract_addr = Some(addr);
+
+    cw.execute(
+        DEFAULT_KEY,
+        &serde_json::json!({ "execute": { "msgs": [] } }).to_string(),
+        "",
+    )
+    .unwrap();
 
     Ok(())
 }

@@ -65,7 +65,7 @@ impl<'a> Instantiate2TxBuilder<'a> {
     }
 
     /// Sets the salt. Value must be hex encoded.
-    pub fn with_salt(&mut self, salt: &'a str) -> &mut Self {
+    pub fn with_salt_hex_encoded(&mut self, salt: &'a str) -> &mut Self {
         self.salt = Some(salt);
 
         self

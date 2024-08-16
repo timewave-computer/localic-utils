@@ -102,7 +102,7 @@ Note that most `tx_*` helper functions expose a `.with_key(key: &str)` builder f
 * `.build_tx_instantiate2` - Predictably instantiates a CosmWasm contract.
   * Required builder calls:
     * `.with_code_id(code_id: u64)` - Should be the raw code ID of the contract being instantiated
-	* `.with_salt(salt: &str)` - Should be a **hex-encoded** salt for instantiation
+	* `.with_salt_hex_encoded(salt: &str)` - Should be a **hex-encoded** salt for instantiation
 	* `.with_msg(msg: serde_json::Value)`
 	* `.with_label(label: &str)`
   * Notable optional builder calls:
