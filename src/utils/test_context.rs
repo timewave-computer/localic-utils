@@ -5,7 +5,9 @@ use super::super::{
 };
 
 use localic_std::{
-    modules::cosmwasm::CosmWasm, relayer::Channel, relayer::Relayer,
+    modules::cosmwasm::CosmWasm,
+    node::Chain,
+    relayer::{Channel, Relayer},
     transactions::ChainRequestBuilder,
 };
 use serde_json::Value;
@@ -400,6 +402,15 @@ impl LocalChain {
     pub fn save_code(&mut self, abs_path: PathBuf, code: u64) {
         let id = abs_path.file_stem().unwrap().to_str().unwrap();
         self.contract_codes.insert(id.to_string(), code);
+    }
+
+    pub fn wait_for_blocks(&self, blocks: u64) {
+        let chain = Chain::new(&self.rb);
+        let current_height = chain.get_height();
+
+        while chain.get_height() < current_height + blocks {
+            std::thread::sleep(std::time::Duration::from_millis(500));
+        }
     }
 }
 

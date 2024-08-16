@@ -1,5 +1,7 @@
 use super::super::{
-    super::{error::Error, DEFAULT_KEY, DEFAULT_TRANSFER_PORT, NEUTRON_CHAIN_NAME},
+    super::{
+        error::Error, DEFAULT_KEY, DEFAULT_TRANSFER_PORT, NEUTRON_CHAIN_ID, NEUTRON_CHAIN_NAME,
+    },
     test_context::{LocalChain, TestContext},
 };
 
@@ -133,5 +135,33 @@ impl TestContext {
         )?;
 
         Ok(())
+    }
+
+    pub fn start_relayer(&mut self) {
+        // Any random chain will allow us to kill the relayer,
+        // so select any chain we can get the API URL from
+        let chain = self.chains.values().next().unwrap();
+
+        // See above. chain_id does not matter, since there is
+        // one relayer running
+        reqwest::blocking::Client::default()
+            .post(&chain.rb.api)
+            .json(&serde_json::json!({ "chain_id": NEUTRON_CHAIN_ID, "action": "start-relayer"}))
+            .send()
+            .unwrap();
+    }
+
+    pub fn stop_relayer(&mut self) {
+        // Any random chain will allow us to kill the relayer,
+        // so select any chain we can get the API URL from
+        let chain = self.chains.values().next().unwrap();
+
+        // See above. chain_id does not matter, since there is
+        // one relayer running
+        reqwest::blocking::Client::default()
+            .post(&chain.rb.api)
+            .json(&serde_json::json!({ "chain_id": NEUTRON_CHAIN_ID, "action": "stop-relayer"}))
+            .send()
+            .unwrap();
     }
 }
