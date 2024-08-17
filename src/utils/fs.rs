@@ -109,9 +109,12 @@ impl TestContext {
             dir_entries.push(dir.unwrap());
         }
 
+        let local_ic_session = self.log_file.start_time;
+        let session_cache_path = format!("{local_cache_path}_{local_ic_session}");
+
         // Use a local cache to avoid storing the same contract multiple times, useful for local testing
         let mut content = String::new();
-        let cache: HashMap<String, u64> = match File::open(local_cache_path) {
+        let cache: HashMap<String, u64> = match File::open(&session_cache_path) {
             Ok(mut file) => {
                 if let Err(err) = file.read_to_string(&mut content) {
                     error!("Failed to read cache file: {}", err);
@@ -155,7 +158,7 @@ impl TestContext {
         }
 
         let contract_codes = serde_json::to_string(&local_chain.contract_codes).unwrap();
-        let mut file = File::create(local_cache_path).unwrap();
+        let mut file = File::create(session_cache_path).unwrap();
         file.write_all(contract_codes.as_bytes()).unwrap();
 
         Ok(())
