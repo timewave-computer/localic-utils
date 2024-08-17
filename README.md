@@ -97,13 +97,24 @@ Note that most `tx_*` helper functions expose a `.with_key(key: &str)` builder f
   * No required builder calls
   * No notable optional builder calls
 
+#### Wasm
+
+* `.build_tx_instantiate2` - Predictably instantiates a CosmWasm contract.
+  * Required builder calls:
+    * `.with_code_id(code_id: u64)` - Should be the raw code ID of the contract being instantiated
+	* `.with_salt_hex_encoded(salt: &str)` - Should be a **hex-encoded** salt for instantiation
+	* `.with_msg(msg: serde_json::Value)`
+	* `.with_label(label: &str)`
+  * Notable optional builder calls:
+    * `.with_chain_name(chain_name: impl Into<String>)` - Should be one of `"osmosis" | "neutron"` or one of the registered chain names from `.with_chain`
+
 #### Tokens
 
 * `.build_tx_create_tokenfactory_token` - Creates a tokenfactory token from `acc0` on Neutron by default.
   * Required builder calls:
     * `.with_subdenom(subdenom: &str)`
   * Notable optional builder calls:
-    * `.with_chain_name(chain_name: impl Into<String>)` - Should be on of `"osmosis" | "neutron" | "stride"` or one of the registered chain names from `.with_chain`
+    * `.with_chain_name(chain_name: impl Into<String>)` - Should be one of `"osmosis" | "neutron" | "stride"` or one of the registered chain names from `.with_chain`
 * `.get_tokenfactory_denom(key: &str, subdenom: &str)` - Gets the tokenfactory denom of a tokenfactory token given its subdenom and key
 * `.build_tx_mint_tokenfactory_token` - Mints a tokenfactory token from `acc0` on Neutron by default.
   * Required builder calls

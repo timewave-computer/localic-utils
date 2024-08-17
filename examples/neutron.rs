@@ -1,5 +1,7 @@
 use cosmwasm_std::Decimal;
-use localic_utils::{types::contract::MinAmount, ConfigChainBuilder, TestContextBuilder};
+use localic_utils::{
+    types::contract::MinAmount, ConfigChainBuilder, TestContextBuilder, DEFAULT_KEY,
+};
 use std::error::Error;
 
 const ACC_0_ADDR: &str = "neutron1hj5fveer5cjtn4wd6wstzugjfdxzl0xpznmsky";
@@ -123,6 +125,41 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_slippage_tolerance(Decimal::percent(50))
         .with_liq_token_receiver(ACC_0_ADDR)
         .send()?;
+
+    let factory_contract_code_id = ctx
+        .get_contract("astroport_whitelist")
+        .unwrap()
+        .code_id
+        .unwrap();
+
+    // Instantiate a contract with a predictable address
+    ctx.build_tx_instantiate2()
+        .with_code_id(factory_contract_code_id)
+        .with_msg(serde_json::json!({
+            "admins": [],
+            "mutable": false,
+        }))
+        .with_salt_hex_encoded(hex::encode("examplesalt").as_str())
+        .with_label("test_contract")
+        .send()
+        .unwrap();
+
+    let addr = ctx
+        .get_built_contract_address()
+        .contract("astroport_whitelist")
+        .creator(ACC_0_ADDR)
+        .salt_hex_encoded(hex::encode("examplesalt").as_str())
+        .get();
+
+    let mut cw = ctx.get_contract("astroport_whitelist").unwrap();
+    cw.contract_addr = Some(addr);
+
+    cw.execute(
+        DEFAULT_KEY,
+        &serde_json::json!({ "execute": { "msgs": [] } }).to_string(),
+        "",
+    )
+    .unwrap();
 
     Ok(())
 }
