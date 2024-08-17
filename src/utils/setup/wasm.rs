@@ -148,7 +148,7 @@ impl TestContext {
 
         let receipt = chain.rb.tx(
             &format!("tx wasm instantiate2 {code_id} {msg} {salt} --label {label} {admin_part}{amt_part}{fix_msg_part}--from {key}{flags_part}"),
-            false,
+            true,
         )?;
 
         self.guard_tx_errors(
