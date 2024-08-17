@@ -663,12 +663,12 @@ impl<'a> TestContextQuery<'a> {
             .chains
             .get(self.src_chain.as_deref().unwrap_or(NEUTRON_CHAIN_NAME))?;
 
-        // text field contains built address
         let mut resp = chain.rb.bin(
             &format!("q wasm build-address {code_id_hash} {creator_address} {salt}"),
             true,
         );
 
+        // text field contains built address
         match resp["text"].take() {
             Value::String(s) => Some(s.replace("\n", "")),
             _ => None,
