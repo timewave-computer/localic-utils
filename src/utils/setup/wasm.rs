@@ -18,6 +18,8 @@ pub struct Instantiate2TxBuilder<'a> {
     // Assume the user performs hex encoding
     salt: Option<&'a str>,
     fix_msg: Option<bool>,
+    flags: Option<&'a str>,
+
     test_ctx: &'a mut TestContext,
 }
 
@@ -77,6 +79,12 @@ impl<'a> Instantiate2TxBuilder<'a> {
         self
     }
 
+    pub fn with_flags(&mut self, flags: &'a str) -> &mut Self {
+        self.flags = Some(flags);
+
+        self
+    }
+
     /// Sends the built instantiate 2 tx.
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_instantiate2(
@@ -89,6 +97,7 @@ impl<'a> Instantiate2TxBuilder<'a> {
             self.funds.as_ref(),
             self.salt.as_ref().expect("missing builder param salt"),
             self.fix_msg,
+            self.flags,
         )
     }
 }
@@ -105,6 +114,7 @@ impl TestContext {
             funds: None,
             salt: None,
             fix_msg: None,
+            flags: None,
             test_ctx: self,
         }
     }
@@ -120,6 +130,7 @@ impl TestContext {
         funds: Option<&Coin>,
         salt: &str,
         fix_msg: Option<bool>,
+        flags: Option<&str>,
     ) -> Result<(), Error> {
         let chain = self.get_chain(chain_name);
 
@@ -133,10 +144,11 @@ impl TestContext {
         let fix_msg_part = fix_msg
             .map(|fix_msg| format!("--fix_msg {fix_msg} "))
             .unwrap_or_default();
+        let flags_part = flags.map(|flags| format!(" {flags}")).unwrap_or_default();
 
         let receipt = chain.rb.tx(
-            &format!("tx wasm instantiate2 {code_id} {msg} {salt} --label {label} {admin_part}{amt_part}{fix_msg_part}--from {key}"),
-            false,
+            &format!("tx wasm instantiate2 {code_id} {msg} {salt} --label {label} {admin_part}{amt_part}{fix_msg_part}--from {key}{flags_part}"),
+            true,
         )?;
 
         self.guard_tx_errors(

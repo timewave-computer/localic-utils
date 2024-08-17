@@ -9,6 +9,9 @@ const ARTIFACTS_DIR: &str = "contracts";
 const ACC_0_ADDR: &str = "neutron1hj5fveer5cjtn4wd6wstzugjfdxzl0xpznmsky";
 const LOCAL_CODE_ID_CACHE_PATH: &str = "code_id_cache.json";
 
+const TEST_TOKEN_1_NAME: &str = "bruhtoken3";
+const TEST_TOKEN_2_NAME: &str = "amoguscoin3";
+
 /// Demonstrates using localic-utils for neutron.
 fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
@@ -30,14 +33,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Create a token in the tokenfactory
     ctx.build_tx_create_tokenfactory_token()
-        .with_subdenom("bruhtoken")
+        .with_subdenom(TEST_TOKEN_1_NAME)
         .send()?;
     ctx.build_tx_create_tokenfactory_token()
-        .with_subdenom("amoguscoin")
+        .with_subdenom(TEST_TOKEN_2_NAME)
         .send()?;
 
-    let bruhtoken = ctx.get_tokenfactory_denom(ACC_0_ADDR, "bruhtoken");
-    let amoguscoin = ctx.get_tokenfactory_denom(ACC_0_ADDR, "amoguscoin");
+    let bruhtoken = ctx.get_tokenfactory_denom(ACC_0_ADDR, TEST_TOKEN_1_NAME);
+    let amoguscoin = ctx.get_tokenfactory_denom(ACC_0_ADDR, TEST_TOKEN_2_NAME);
 
     // Deploy valence auctions
     ctx.build_tx_create_auctions_manager()
@@ -78,10 +81,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_amount_offer_asset(10000)
         .send()?;
 
-    ctx.get_auction(("untrn", ctx.get_tokenfactory_denom(ACC_0_ADDR, "bruhtoken")))?;
     ctx.get_auction((
         "untrn",
-        ctx.get_tokenfactory_denom(ACC_0_ADDR, "amoguscoin"),
+        ctx.get_tokenfactory_denom(ACC_0_ADDR, TEST_TOKEN_1_NAME),
+    ))?;
+    ctx.get_auction((
+        "untrn",
+        ctx.get_tokenfactory_denom(ACC_0_ADDR, TEST_TOKEN_2_NAME),
     ))?;
 
     ctx.build_tx_create_token_registry()
@@ -101,7 +107,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let pool = ctx.get_astroport_pool(
         "untrn",
-        ctx.get_tokenfactory_denom(ACC_0_ADDR, "amoguscoin"),
+        ctx.get_tokenfactory_denom(ACC_0_ADDR, TEST_TOKEN_2_NAME),
     )?;
 
     assert!(pool
@@ -148,6 +154,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }))
         .with_salt_hex_encoded(hex::encode("examplesalt").as_str())
         .with_label("test_contract")
+        .with_flags("--gas 10000000")
         .send()
         .unwrap();
 
