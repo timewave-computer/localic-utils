@@ -5,7 +5,7 @@ use super::super::{
         contract::DeployedContractInfo,
         ibc::Channel as QueryChannel,
     },
-    LOCAL_IC_API_URL, LOGS_FILE_PATH, NEUTRON_CHAIN_NAME, TRANSFER_PORT,
+    ICTEST_HOME_VAR, LOCAL_IC_API_URL, NEUTRON_CHAIN_NAME, TRANSFER_PORT,
 };
 
 use localic_std::{
@@ -15,7 +15,7 @@ use localic_std::{
     transactions::ChainRequestBuilder,
 };
 use serde_json::Value;
-use std::{collections::HashMap, fs::OpenOptions, path::PathBuf};
+use std::{collections::HashMap, env, fs::OpenOptions, path::PathBuf};
 
 /// A configurable builder that can be used to create a TestContext.
 pub struct TestContextBuilder {
@@ -29,6 +29,7 @@ pub struct TestContextBuilder {
     unwrap_raw_logs: bool,
     transfer_channels: Vec<(String, String)>,
     ccv_channels: Vec<(String, String)>,
+    log_file_path: Option<String>,
 }
 
 impl Default for TestContextBuilder {
@@ -44,6 +45,7 @@ impl Default for TestContextBuilder {
             unwrap_raw_logs: Default::default(),
             transfer_channels: Default::default(),
             ccv_channels: Default::default(),
+            log_file_path: Default::default(),
         }
     }
 }
@@ -204,6 +206,13 @@ impl TestContextBuilder {
         self
     }
 
+    /// Sets the path to the config/logs.json file.
+    pub fn with_log_file_path(&mut self, path: impl Into<String>) -> &mut Self {
+        self.log_file_path = Some(path.into());
+
+        self
+    }
+
     /// Builds a TestContext from the specified options.
     pub fn build(&self) -> Result<TestContext, Error> {
         let TestContextBuilder {
@@ -217,6 +226,7 @@ impl TestContextBuilder {
             unwrap_raw_logs,
             transfer_channels,
             ccv_channels,
+            log_file_path,
         } = self;
 
         // Upload contract artifacts
@@ -317,7 +327,21 @@ impl TestContextBuilder {
             );
         }
 
-        let log_f = OpenOptions::new().read(true).open(LOGS_FILE_PATH).unwrap();
+        let log_f = OpenOptions::new()
+            .read(true)
+            .open(log_file_path.clone().unwrap_or_else(|| {
+                format!(
+                    "{}configs/logs.json",
+                    env::var(ICTEST_HOME_VAR)
+                        .map(|path| if path.ends_with("/") {
+                            path
+                        } else {
+                            format!("{path}/")
+                        })
+                        .unwrap_or_default()
+                )
+            }))
+            .unwrap();
         let log_file: Logs = serde_json::from_reader(&log_f).unwrap();
 
         Ok(TestContext {
