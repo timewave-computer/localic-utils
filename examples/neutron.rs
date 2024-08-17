@@ -132,7 +132,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .code_id
         .unwrap();
 
-    // Instantiate a contract predictably
+    // Instantiate a contract with a predictable address
     ctx.build_tx_instantiate2()
         .with_code_id(factory_contract_code_id)
         .with_msg(serde_json::json!({
