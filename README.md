@@ -106,7 +106,7 @@ Note that most `tx_*` helper functions expose a `.with_key(key: &str)` builder f
 	* `.with_msg(msg: serde_json::Value)`
 	* `.with_label(label: &str)`
   * Notable optional builder calls:
-    * `.with_chain_name(chain_name: impl Into<String>)` - Should be on of `"osmosis" | "neutron"` or one of the registered chain names from `.with_chain`
+    * `.with_chain_name(chain_name: impl Into<String>)` - Should be one of `"osmosis" | "neutron"` or one of the registered chain names from `.with_chain`
 
 #### Tokens
 
@@ -114,7 +114,7 @@ Note that most `tx_*` helper functions expose a `.with_key(key: &str)` builder f
   * Required builder calls:
     * `.with_subdenom(subdenom: &str)`
   * Notable optional builder calls:
-    * `.with_chain_name(chain_name: impl Into<String>)` - Should be on of `"osmosis" | "neutron" | "stride"` or one of the registered chain names from `.with_chain`
+    * `.with_chain_name(chain_name: impl Into<String>)` - Should be one of `"osmosis" | "neutron" | "stride"` or one of the registered chain names from `.with_chain`
 * `.get_tokenfactory_denom(key: &str, subdenom: &str)` - Gets the tokenfactory denom of a tokenfactory token given its subdenom and key
 * `.build_tx_mint_tokenfactory_token` - Mints a tokenfactory token from `acc0` on Neutron by default.
   * Required builder calls
