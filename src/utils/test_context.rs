@@ -1,7 +1,7 @@
 use super::super::{
     error::Error,
     types::{config::ConfigChain, contract::DeployedContractInfo, ibc::Channel as QueryChannel},
-    LOCAL_IC_API_URL, NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_NAME, TRANSFER_PORT,
+    LOCAL_IC_API_URL, NEUTRON_CHAIN_NAME, TRANSFER_PORT,
 };
 
 use localic_std::{
@@ -655,7 +655,7 @@ impl<'a> TestContextQuery<'a> {
         let code_info = self.get_code_info()?;
         let code_id_hash = code_info["data_hash"].as_str()?;
 
-        let creator_address = NEUTRON_CHAIN_ADMIN_ADDR;
+        let creator_address = self.creator_address.as_ref()?;
         let salt = self.salt_hex_encoded.as_deref()?;
 
         let chain = self
