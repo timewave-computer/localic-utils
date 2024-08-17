@@ -40,6 +40,7 @@ The `TestContextBuilder` cannot be successfully built without specifying an arti
 For a full list of builder calls available under the `TestContextBuilder`, see [test_context.rs](https://github.com/timewave-computer/localic-utils/blob/main/src/utils/test_context.rs).
 
 * `.with_api_url(api_url: impl Into<String>)`
+* `.with_log_file_path(path: impl Into<String>)` - Optional if local-ic is running in the same dir as localic-utils or ICTEST_HOME is specified. Should be a path to config/logs.json.
 * `.with_chain(chain: ConfigChain)`
   * The `TestContext` is not configured to use any chains by default. Calling this builder method adds a `ConfigChain`, which grants the `TestContext` access to that chain's related helper functions. These helper functions will error without access to their requisite chains.
 * `.with_transfer_channels(chain_a: impl Into<String>, chain_b: impl Into<String>)`

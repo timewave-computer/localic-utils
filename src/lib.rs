@@ -66,6 +66,5 @@ pub const DEFAULT_AUCTION_LABEL: &str = "auction";
 pub const TX_HASH_QUERY_RETRIES: u16 = 5;
 pub const TX_HASH_QUERY_PAUSE_SEC: u64 = 2;
 
-/// Contains information about ibc paths, time started
-/// Used for cache invalidation purposes
-pub const LOGS_FILE_PATH: &str = "configs/logs.json";
+/// Used by local-ic to determine working dir
+pub const ICTEST_HOME_VAR: &str = "ICTEST_HOME";
