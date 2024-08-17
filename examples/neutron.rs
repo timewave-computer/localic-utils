@@ -1,10 +1,13 @@
 use cosmwasm_std::Decimal;
 use localic_utils::{
     types::contract::MinAmount, ConfigChainBuilder, TestContextBuilder, DEFAULT_KEY,
+    NEUTRON_CHAIN_NAME,
 };
 use std::error::Error;
 
+const ARTIFACTS_DIR: &str = "contracts";
 const ACC_0_ADDR: &str = "neutron1hj5fveer5cjtn4wd6wstzugjfdxzl0xpznmsky";
+const LOCAL_CODE_ID_CACHE_PATH: &str = "code_id_cache.json";
 
 /// Demonstrates using localic-utils for neutron.
 fn main() -> Result<(), Box<dyn Error>> {
@@ -14,12 +17,16 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut ctx = TestContextBuilder::default()
         .with_unwrap_raw_logs(true)
         .with_api_url("http://localhost:42069/")
-        .with_artifacts_dir("contracts")
+        .with_artifacts_dir(ARTIFACTS_DIR)
         .with_chain(ConfigChainBuilder::default_neutron().build()?)
         .build()?;
 
     // Upload contracts
-    ctx.build_tx_upload_contracts().send()?;
+    ctx.build_tx_upload_contracts().send_with_local_cache(
+        "contracts",
+        NEUTRON_CHAIN_NAME,
+        LOCAL_CODE_ID_CACHE_PATH,
+    )?;
 
     // Create a token in the tokenfactory
     ctx.build_tx_create_tokenfactory_token()
