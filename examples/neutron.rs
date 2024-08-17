@@ -148,6 +148,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }))
         .with_salt_hex_encoded(hex::encode("examplesalt").as_str())
         .with_label("test_contract")
+        .with_flags("--gas 10000000000")
         .send()
         .unwrap();
 
