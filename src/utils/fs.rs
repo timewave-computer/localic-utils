@@ -110,7 +110,8 @@ impl TestContext {
         }
 
         let local_ic_session = self.log_file.start_time;
-        let session_cache_path = format!("{local_cache_path}_{local_ic_session}");
+        let session_cache_path =
+            local_cache_path.replace(".json", &format!("_{local_ic_session}.json"));
 
         // Use a local cache to avoid storing the same contract multiple times, useful for local testing
         let mut content = String::new();
