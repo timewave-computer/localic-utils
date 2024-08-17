@@ -12,6 +12,51 @@ use super::super::{
 use derive_builder::Builder;
 use serde::Deserialize;
 
+/// Struct representing the contents of config/logs.json
+#[derive(Deserialize)]
+pub struct Logs {
+    pub start_time: u64,
+    pub chains: Vec<LogsChainEntry>,
+    pub ibc_channels: Vec<LogsChannelEntry>,
+}
+
+/// Represents a chain entry in the logs file
+#[derive(Deserialize)]
+pub struct LogsChainEntry {
+    pub chain_id: String,
+    pub chain_name: String,
+    pub rpc_address: String,
+    pub grpc_address: String,
+    pub p2p_address: String,
+    pub ibc_paths: Vec<String>,
+}
+
+/// Represents an IBC channel entry in the logs file
+#[derive(Deserialize)]
+pub struct LogsChannelEntry {
+    pub chain_id: String,
+    pub channel: LogsChannel,
+}
+
+/// Represents the channel info in a channel entry
+#[derive(Deserialize)]
+pub struct LogsChannel {
+    pub state: String,
+    pub ordering: String,
+    pub counterparty: LogsCounterparty,
+    pub connection_hops: Vec<String>,
+    pub version: String,
+    pub port_id: String,
+    pub channel_id: String,
+}
+
+/// Represents counterparty info in a channel entry
+#[derive(Deserialize)]
+pub struct LogsCounterparty {
+    pub port_id: String,
+    pub channel_id: String,
+}
+
 #[derive(Deserialize, Default, Builder, Debug)]
 #[builder(setter(into, prefix = "with"))]
 pub struct ChainsVec {
