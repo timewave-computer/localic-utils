@@ -1,7 +1,11 @@
 use super::super::{
     error::Error,
-    types::{config::ConfigChain, contract::DeployedContractInfo, ibc::Channel as QueryChannel},
-    LOCAL_IC_API_URL, NEUTRON_CHAIN_NAME, TRANSFER_PORT,
+    types::{
+        config::{ConfigChain, Logs},
+        contract::DeployedContractInfo,
+        ibc::Channel as QueryChannel,
+    },
+    LOCAL_IC_API_URL, LOGS_FILE_PATH, NEUTRON_CHAIN_NAME, TRANSFER_PORT,
 };
 
 use localic_std::{
@@ -11,7 +15,7 @@ use localic_std::{
     transactions::ChainRequestBuilder,
 };
 use serde_json::Value;
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, fs::OpenOptions, path::PathBuf};
 
 /// A configurable builder that can be used to create a TestContext.
 pub struct TestContextBuilder {
@@ -313,6 +317,9 @@ impl TestContextBuilder {
             );
         }
 
+        let log_f = OpenOptions::new().read(true).open(LOGS_FILE_PATH).unwrap();
+        let log_file: Logs = serde_json::from_reader(&log_f).unwrap();
+
         Ok(TestContext {
             chains,
             transfer_channel_ids,
@@ -326,6 +333,7 @@ impl TestContextBuilder {
             astroport_token_registry: None,
             astroport_factory: None,
             unwrap_logs: *unwrap_raw_logs,
+            log_file,
         })
     }
 }
@@ -353,6 +361,9 @@ pub struct TestContext {
 
     /// Whether or not logs should be expected and guarded for each tx
     pub unwrap_logs: bool,
+
+    /// chains/logs.json
+    pub log_file: Logs,
 }
 
 pub struct LocalChain {
