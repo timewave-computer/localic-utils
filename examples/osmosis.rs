@@ -21,7 +21,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_chain_name(OSMOSIS_CHAIN_NAME)
         .with_subdenom("bruhtoken")
         .send()?;
-    let bruhtoken = ctx.get_tokenfactory_denom(ACC_0_ADDR, "bruhtoken");
+    let bruhtoken = ctx
+        .get_tokenfactory_denom()
+        .creator(ACC_0_ADDR)
+        .subdenom("bruhtoken".into())
+        .get();
     ctx.build_tx_mint_tokenfactory_token()
         .with_chain_name(OSMOSIS_CHAIN_NAME)
         .with_amount(10000000000000000000)
@@ -38,7 +42,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         .send()?;
 
     // Get its id
-    let pool_id = ctx.get_osmo_pool("uosmo", &bruhtoken)?;
+    let pool_id = ctx
+        .get_osmo_pool()
+        .denoms("uosmo".into(), bruhtoken.clone())
+        .get_u64();
 
     // Fund the pool
     ctx.build_tx_fund_osmo_pool()
