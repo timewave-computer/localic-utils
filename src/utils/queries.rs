@@ -153,10 +153,10 @@ impl<'a> TestContextQuery<'a> {
     pub fn get_cw(self) -> CosmWasm<'a> {
         match self.query_type {
             QueryType::Contract => self.get_contract(),
-            QueryType::Factory
-            | QueryType::Auction
-            | QueryType::PriceOracle
-            | QueryType::AuctionsManager => self.get_deployed_contract(),
+            QueryType::Factory | QueryType::PriceOracle | QueryType::AuctionsManager => {
+                self.get_deployed_contract()
+            }
+            QueryType::Auction => self.get_auction(),
             QueryType::AstroPool => self.get_astro_pool(),
             QueryType::TransferChannel
             | QueryType::Connection
@@ -406,6 +406,38 @@ impl<'a> TestContextQuery<'a> {
             Some(*code_id),
             Some(contract_addr),
         ))
+    }
+
+    /// Multiple auctions might exist, so contract_addrs singleton info
+    /// cannot be used
+    fn get_auction(&self) -> Option<CosmWasm<'a>> {
+        let mut auction_contract = self
+            .context
+            .get_contract()
+            .src(self.src_chain.as_deref()?)
+            .contract(AUCTION_CONTRACT_NAME)
+            .get_cw();
+
+        let denoms = (self.offer_asset.as_deref()?, self.ask_asset.as_deref()?);
+
+        // The auctions manager for this deployment
+        let contract_a = self
+            .context
+            .get_auctions_manager()
+            .src(self.src_chain.as_deref()?)
+            .get_cw();
+
+        // Get the address of the auction specified
+        let resp = contract_a.query_value(&serde_json::json!({
+            "get_pair_addr": {
+                "pair": (denoms.0, denoms.1)
+            }
+        }));
+
+        auction_contract.contract_addr =
+            Some(resp.get("data").and_then(|json| json.as_str())?.to_owned());
+
+        Some(auction_contract)
     }
 
     fn get_astro_pool(&self) -> Option<CosmWasm<'a>> {
