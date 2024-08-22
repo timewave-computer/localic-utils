@@ -159,7 +159,7 @@
       "binary": "osmosisd",
       "bech32_prefix": "osmo",
       "docker_image": {
-        "version": "v25.0.4",
+        "version": "v21.0.0",
         "repository": "ghcr.io/strangelove-ventures/heighliner/osmosis"
       },
       "gas_prices": "0.0025%DENOM%",

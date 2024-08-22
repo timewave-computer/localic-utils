@@ -73,7 +73,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Deploy valence auctions
     ctx.build_tx_create_auctions_manager()
         .with_min_auction_amount(&[(
-            &String::from("untrn"),
+            &String::from("uosmo"),
             MinAmount {
                 send: "0".into(),
                 start_auction: "0".into(),
@@ -86,7 +86,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_chain(OSMOSIS_CHAIN_NAME)
         .send()?;
     ctx.build_tx_manual_oracle_price_update()
-        .with_offer_asset("untrn")
+        .with_offer_asset("uosmo")
         .with_ask_asset(bruhtoken.as_str())
         .with_price(Decimal::percent(10))
         .with_chain(OSMOSIS_CHAIN_NAME)
@@ -95,25 +95,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_chain(OSMOSIS_CHAIN_NAME)
         .send()?;
 
-    ctx.build_tx_mint_tokenfactory_token()
-        .with_denom(bruhtoken.as_str())
-        .with_amount(10000000000)
-        .with_chain(OSMOSIS_CHAIN_NAME)
-        .send()?;
-    ctx.build_tx_mint_tokenfactory_token()
-        .with_denom(bruhtoken.as_str())
-        .with_amount(10000000000)
-        .with_chain(OSMOSIS_CHAIN_NAME)
-        .send()?;
-
     ctx.build_tx_create_auction()
-        .with_offer_asset("untrn")
+        .with_offer_asset("uosmo")
         .with_ask_asset(bruhtoken.as_str())
         .with_amount_offer_asset(10000)
         .with_chain(OSMOSIS_CHAIN_NAME)
         .send()?;
     ctx.build_tx_create_auction()
-        .with_offer_asset("untrn")
+        .with_offer_asset("uosmo")
         .with_ask_asset(bruhtoken.as_str())
         .with_amount_offer_asset(10000)
         .with_chain(OSMOSIS_CHAIN_NAME)
@@ -121,7 +110,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let _ = ctx
         .get_auction()
-        .offer_asset("untrn")
+        .offer_asset("uosmo")
         .ask_asset(
             &ctx.get_tokenfactory_denom()
                 .creator(ACC_0_ADDR)
@@ -131,7 +120,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .get_cw();
     let _ = ctx
         .get_auction()
-        .offer_asset("untrn")
+        .offer_asset("uosmo")
         .ask_asset(
             &ctx.get_tokenfactory_denom()
                 .creator(ACC_0_ADDR)
@@ -149,12 +138,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_chain(OSMOSIS_CHAIN_NAME)
         .send()?;
     ctx.build_tx_create_pool()
-        .with_denom_a("untrn")
+        .with_denom_a("uosmo")
         .with_denom_b(bruhtoken.clone())
         .with_chain(OSMOSIS_CHAIN_NAME)
         .send()?;
     ctx.build_tx_create_pool()
-        .with_denom_a("untrn")
+        .with_denom_a("uosmo")
         .with_denom_b(bruhtoken.clone())
         .with_chain(OSMOSIS_CHAIN_NAME)
         .send()?;
@@ -162,7 +151,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let pool = ctx
         .get_astro_pool()
         .denoms(
-            "untrn".to_owned(),
+            "uosmo".to_owned(),
             ctx.get_tokenfactory_denom()
                 .creator(ACC_0_ADDR)
                 .subdenom(TEST_TOKEN_1_NAME.to_owned())
@@ -179,21 +168,21 @@ fn main() -> Result<(), Box<dyn Error>> {
         .is_some());
 
     ctx.build_tx_fund_auction()
-        .with_offer_asset("untrn")
+        .with_offer_asset("uosmo")
         .with_ask_asset(bruhtoken.as_str())
         .with_amount_offer_asset(10000)
         .with_chain(OSMOSIS_CHAIN_NAME)
         .send()?;
 
     ctx.build_tx_start_auction()
-        .with_offer_asset("untrn")
+        .with_offer_asset("uosmo")
         .with_ask_asset(bruhtoken.as_str())
         .with_end_block_delta(1000000)
         .with_chain(OSMOSIS_CHAIN_NAME)
         .send()?;
 
     ctx.build_tx_fund_pool()
-        .with_denom_a("untrn")
+        .with_denom_a("uosmo")
         .with_denom_b(bruhtoken)
         .with_amount_denom_a(10000)
         .with_amount_denom_b(10000)

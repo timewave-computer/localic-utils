@@ -528,7 +528,7 @@ impl TestContext {
             "transaction did not produce a tx hash",
         )))?;
 
-        self.guard_tx_errors(NEUTRON_CHAIN_NAME, tx_hash.as_str())?;
+        self.guard_tx_errors(chain, tx_hash.as_str())?;
 
         Ok(())
     }
@@ -598,7 +598,7 @@ impl TestContext {
             .tx_hash
             .ok_or(Error::TxMissingLogs)?;
 
-        self.guard_tx_errors(NEUTRON_CHAIN_NAME, tx.as_str())?;
+        self.guard_tx_errors(chain, tx.as_str())?;
 
         Ok(())
     }

@@ -151,7 +151,7 @@ impl TestContext {
             true,
         )?;
 
-        self.guard_tx_errors(
+        self.guard_txo_errors(
             chain_name,
             receipt
                 .get("txhash")
