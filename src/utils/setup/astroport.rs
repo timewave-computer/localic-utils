@@ -1,7 +1,9 @@
 use super::super::{
     super::{
-        error::Error, DEFAULT_KEY, FACTORY_NAME, NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_NAME,
-        PAIR_NAME, STABLE_PAIR_NAME, TOKEN_NAME, TOKEN_REGISTRY_NAME, WHITELIST_NAME,
+        error::Error, CW1_WHITELIST_NAME, DEFAULT_KEY, FACTORY_NAME, FACTORY_ON_OSMOSIS_NAME,
+        NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_NAME, OSMOSIS_CHAIN_NAME,
+        OSMOSIS_PCL_POOL_TYPE_NAME, PAIR_NAME, PAIR_PCL_ON_OSMOSIS_NAME, STABLE_PAIR_NAME,
+        TOKEN_NAME, TOKEN_REGISTRY_NAME, WHITELIST_NAME,
     },
     test_context::TestContext,
 };
@@ -23,6 +25,12 @@ pub struct CreateTokenRegistryTxBuilder<'a> {
 impl<'a> CreateTokenRegistryTxBuilder<'a> {
     pub fn with_key(&mut self, key: &'a str) -> &mut Self {
         self.key = Some(key);
+
+        self
+    }
+
+    pub fn with_chain(&mut self, chain: &'a str) -> &mut Self {
+        self.chain = chain;
 
         self
     }
@@ -287,6 +295,13 @@ impl TestContext {
         chain_name: &str,
         factory_owner: impl Into<String>,
     ) -> Result<(), Error> {
+        if chain_name == OSMOSIS_CHAIN_NAME {
+            // Osmosis setup should be handled differently with astroport-on-osmosis contracts:
+            return self.tx_create_factory_osmo(key, chain_name);
+        }
+
+        // Assume neutron, or some neutron-capable chain, otherwise
+        // bubble-up missing capabilities error to the user
         let chain = self.get_chain(chain_name);
 
         let pair_xyk_code_id =
@@ -370,6 +385,93 @@ impl TestContext {
         )?;
 
         let chain = self.get_mut_chain(chain_name);
+
+        chain
+            .contract_addrs
+            .insert(FACTORY_NAME.to_owned(), contract.address);
+
+        Ok(())
+    }
+
+    fn tx_create_factory_osmo(
+        &mut self,
+        key: &str,
+        factory_owner: impl Into<String>,
+    ) -> Result<(), Error> {
+        let chain = self.get_chain(OSMOSIS_CHAIN_NAME);
+
+        // Pcl contract code ID for a custom pool
+        let pair_pcl_code_id = self
+            .get_contract()
+            .contract(PAIR_PCL_ON_OSMOSIS_NAME)
+            .src(OSMOSIS_CHAIN_NAME)
+            .get_cw()
+            .code_id
+            .unwrap();
+
+        // Cw20 base code ID
+        let token_code_id = self
+            .get_contract()
+            .contract(TOKEN_NAME)
+            .src(OSMOSIS_CHAIN_NAME)
+            .get_cw()
+            .code_id
+            .unwrap();
+
+        // Don't use the astroport whitelist here, since it does not support osmosis
+        // use the cw plus whitelist
+        let whitelist_code_id = self
+            .get_contract()
+            .contract(CW1_WHITELIST_NAME)
+            .src(OSMOSIS_CHAIN_NAME)
+            .get_cw()
+            .code_id
+            .unwrap();
+
+        // Instantiate the osmosis factory
+        let mut contract_a = self
+            .get_contract()
+            .src(OSMOSIS_CHAIN_NAME)
+            .contract(FACTORY_ON_OSMOSIS_NAME)
+            .get_cw();
+
+        // Get the deployed native coin registry
+        let native_registry_addr =
+            chain
+                .contract_addrs
+                .get(TOKEN_REGISTRY_NAME)
+                .ok_or(Error::MissingContextVariable(String::from(
+                    "contract_ddrs::astroport_native_coin_registry",
+                )))?;
+
+        // Enable PCL (custom) pools only
+        let contract = contract_a.instantiate(
+            key,
+            serde_json::to_string(&factory::InstantiateMsg {
+                pair_configs: vec![PairConfig {
+                    code_id: pair_pcl_code_id,
+                    pair_type: PairType::Custom(String::from(OSMOSIS_PCL_POOL_TYPE_NAME)),
+                    total_fee_bps: 100,
+                    maker_fee_bps: 10,
+                    is_disabled: false,
+                    is_generator_disabled: false,
+                    permissioned: false,
+                }],
+                token_code_id,
+                owner: factory_owner.into(),
+                whitelist_code_id,
+                coin_registry_address: native_registry_addr.clone(),
+                fee_address: None,
+                generator_address: None,
+                tracker_config: None,
+            })?
+            .as_str(),
+            FACTORY_NAME,
+            None,
+            "",
+        )?;
+
+        let chain = self.get_mut_chain(OSMOSIS_CHAIN_NAME);
 
         chain
             .contract_addrs

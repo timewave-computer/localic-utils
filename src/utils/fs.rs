@@ -14,6 +14,7 @@ use std::{
 /// A tx uploading contract artifacts.
 pub struct UploadContractsTxBuilder<'a> {
     key: Option<&'a str>,
+    chain: &'a str,
     test_ctx: &'a mut TestContext,
 }
 
@@ -24,11 +25,18 @@ impl<'a> UploadContractsTxBuilder<'a> {
         self
     }
 
+    pub fn with_chain(&mut self, chain: &'a str) -> &mut Self {
+        self.chain = chain;
+
+        self
+    }
+
     /// Sends the transaction.
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_upload_contracts(
             self.key
                 .ok_or(Error::MissingBuilderParam(String::from("key")))?,
+            self.chain,
         )
     }
 
@@ -53,11 +61,12 @@ impl TestContext {
     pub fn build_tx_upload_contracts(&mut self) -> UploadContractsTxBuilder {
         UploadContractsTxBuilder {
             key: Some(DEFAULT_KEY),
+            chain: NEUTRON_CHAIN_NAME,
             test_ctx: self,
         }
     }
 
-    fn tx_upload_contracts(&mut self, key: &str) -> Result<(), Error> {
+    fn tx_upload_contracts(&mut self, key: &str, chain: &str) -> Result<(), Error> {
         fs::read_dir(&self.artifacts_dir)?
             .filter_map(|dir_ent| dir_ent.ok())
             .filter(|dir_ent| {
@@ -67,9 +76,9 @@ impl TestContext {
             .map(fs::canonicalize)
             .try_for_each(|maybe_abs_path| {
                 let path = maybe_abs_path?;
-                let neutron_local_chain = self.get_mut_chain(NEUTRON_CHAIN_NAME);
+                let chain = self.get_mut_chain(chain);
 
-                let mut cw = CosmWasm::new(&neutron_local_chain.rb);
+                let mut cw = CosmWasm::new(&chain.rb);
 
                 let code_id = cw.store(key, &path)?;
 
@@ -77,9 +86,7 @@ impl TestContext {
                     .file_stem()
                     .and_then(|stem| stem.to_str())
                     .ok_or(Error::Misc(String::from("failed to format file path")))?;
-                neutron_local_chain
-                    .contract_codes
-                    .insert(id.to_string(), code_id);
+                chain.contract_codes.insert(id.to_string(), code_id);
 
                 Ok(())
             })

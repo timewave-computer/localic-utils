@@ -1,12 +1,22 @@
 use super::super::{
-    super::{error::Error, DEFAULT_KEY, OSMOSIS_CHAIN_NAME, OSMOSIS_POOLFILE_PATH},
+    super::{
+        error::Error,
+        types::osmosis::{CosmWasmPoolType, PoolType},
+        DEFAULT_KEY, FACTORY_ON_OSMOSIS_NAME, OSMOSIS_CHAIN_NAME, OSMOSIS_POOLFILE_PATH,
+        PAIR_PCL_ON_OSMOSIS_NAME, TOKEN_NAME,
+    },
     test_context::TestContext,
 };
+use astroport::{asset::AssetInfo, pair};
 use cosmwasm_std::Decimal;
 use std::{fs::OpenOptions, io::Write, path::Path};
 
 pub struct CreateOsmoPoolTxBuilder<'a> {
     key: &'a str,
+    label: Option<&'a str>,
+    admin: Option<&'a str>,
+    flags: Option<&'a str>,
+    pool_type: PoolType,
     weights: Vec<(u64, &'a str)>,
     initial_deposit: Vec<(u64, &'a str)>,
     swap_fee: Decimal,
@@ -18,6 +28,30 @@ pub struct CreateOsmoPoolTxBuilder<'a> {
 impl<'a> CreateOsmoPoolTxBuilder<'a> {
     pub fn with_key(&mut self, key: &'a str) -> &mut Self {
         self.key = key;
+
+        self
+    }
+
+    pub fn with_label(&mut self, label: &'a str) -> &mut Self {
+        self.label = Some(label);
+
+        self
+    }
+
+    pub fn with_admin(&mut self, admin: &'a str) -> &mut Self {
+        self.admin = Some(admin);
+
+        self
+    }
+
+    pub fn with_flags(&mut self, flags: &'a str) -> &mut Self {
+        self.flags = Some(flags);
+
+        self
+    }
+
+    pub fn with_pool_type(&mut self, pool_type: PoolType) -> &mut Self {
+        self.pool_type = pool_type;
 
         self
     }
@@ -56,6 +90,10 @@ impl<'a> CreateOsmoPoolTxBuilder<'a> {
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_create_osmo_pool(
             self.key,
+            self.label,
+            self.admin,
+            self.flags,
+            self.pool_type,
             self.weights.iter().cloned(),
             self.initial_deposit.iter().cloned(),
             self.swap_fee,
@@ -115,6 +153,10 @@ impl TestContext {
     pub fn build_tx_create_osmo_pool(&mut self) -> CreateOsmoPoolTxBuilder {
         CreateOsmoPoolTxBuilder {
             key: DEFAULT_KEY,
+            label: Default::default(),
+            admin: Default::default(),
+            flags: Default::default(),
+            pool_type: PoolType::Xyk,
             weights: Default::default(),
             initial_deposit: Default::default(),
             swap_fee: Decimal::percent(0),
@@ -126,6 +168,38 @@ impl TestContext {
 
     /// Creates an osmosis pool with the given denoms.
     fn tx_create_osmo_pool<'a>(
+        &mut self,
+        key: &str,
+        label: Option<&str>,
+        admin: Option<&str>,
+        flags: Option<&str>,
+        pool_type: PoolType,
+        weights: impl Iterator<Item = (u64, &'a str)>,
+        initial_deposit: impl Iterator<Item = (u64, &'a str)>,
+        swap_fee: Decimal,
+        exit_fee: Decimal,
+        future_governor: &'a str,
+    ) -> Result<(), Error> {
+        match pool_type {
+            PoolType::Xyk => self.tx_create_osmo_pool_xyk(
+                key,
+                weights,
+                initial_deposit,
+                swap_fee,
+                exit_fee,
+                future_governor,
+            ),
+            PoolType::CosmWasm(CosmWasmPoolType::Pcl) => self.tx_create_osmo_pool_pcl(
+                key,
+                label.expect("missing PCL contract instance label"),
+                admin,
+                flags,
+                weights,
+            ),
+        }
+    }
+
+    fn tx_create_osmo_pool_xyk<'a>(
         &mut self,
         key: &str,
         weights: impl Iterator<Item = (u64, &'a str)>,
@@ -178,6 +252,68 @@ impl TestContext {
                 .and_then(|receipt| receipt.as_str())
                 .ok_or(Error::TxMissingLogs)?,
         )?;
+
+        Ok(())
+    }
+
+    fn tx_create_osmo_pool_pcl<'a>(
+        &mut self,
+        key: &str,
+        label: &str,
+        admin: Option<&str>,
+        flags: Option<&str>,
+        weights: impl Iterator<Item = (u64, &'a str)>,
+    ) -> Result<(), Error> {
+        let osmosis = self.get_chain(OSMOSIS_CHAIN_NAME);
+
+        // Creating a PCL pool takes a few steps:
+        // - Instantiating the contract for the PCL pool
+        // - Registering the pool in x/cosmwasmpool
+        // - Registering THAT pool in x/poolmanager
+
+        // Start by creating the PCL contract instance
+        // Select only denoms for weights (weights are not supplied at instantiation in astroport vs osmosis)
+        // Support only native tokens, not cw 20's
+        let asset_infos = weights
+            .map(|(_, denom)| denom.to_owned())
+            .map(|denom| AssetInfo::NativeToken { denom })
+            .collect::<Vec<_>>();
+
+        // Cw20 base code ID
+        let token_code_id = self
+            .get_contract()
+            .contract(TOKEN_NAME)
+            .src(OSMOSIS_CHAIN_NAME)
+            .get_cw()
+            .code_id
+            .unwrap();
+
+        let factory_addr = osmosis
+            .contract_addrs
+            .get(FACTORY_ON_OSMOSIS_NAME)
+            .unwrap()
+            .clone();
+
+        let mut pcl_contract = self
+            .get_contract()
+            .contract(PAIR_PCL_ON_OSMOSIS_NAME)
+            .src(OSMOSIS_CHAIN_NAME)
+            .get_cw();
+        pcl_contract
+            .instantiate(
+                key,
+                &serde_json::to_string(&pair::InstantiateMsg {
+                    asset_infos,
+                    token_code_id,
+                    factory_addr,
+                    init_params: None,
+                })
+                .unwrap(),
+                label,
+                admin,
+                flags.unwrap_or_default(),
+            )
+            .unwrap();
 
         Ok(())
     }

@@ -9,8 +9,8 @@ const ARTIFACTS_DIR: &str = "contracts";
 const ACC_0_ADDR: &str = "neutron1hj5fveer5cjtn4wd6wstzugjfdxzl0xpznmsky";
 const LOCAL_CODE_ID_CACHE_PATH: &str = "code_id_cache.json";
 
-const TEST_TOKEN_1_NAME: &str = "bruhtoken3";
-const TEST_TOKEN_2_NAME: &str = "amoguscoin3";
+const TEST_TOKEN_1_NAME: &str = "bruhtoken";
+const TEST_TOKEN_2_NAME: &str = "amoguscoin";
 
 /// Demonstrates using localic-utils for neutron.
 fn main() -> Result<(), Box<dyn Error>> {
