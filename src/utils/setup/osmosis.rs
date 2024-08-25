@@ -1,22 +1,24 @@
 use super::super::{
     super::{
         error::Error,
-        types::osmosis::{CosmWasmPoolType, PoolType},
-        DEFAULT_KEY, FACTORY_ON_OSMOSIS_NAME, OSMOSIS_CHAIN_NAME, OSMOSIS_POOLFILE_PATH,
-        PAIR_PCL_ON_OSMOSIS_NAME, TOKEN_NAME,
+        types::osmosis::{CosmWasmPoolType, PoolInitParams, PoolType},
+        DEFAULT_KEY, OSMOSIS_CHAIN_NAME, OSMOSIS_POOLFILE_PATH,
     },
     test_context::TestContext,
 };
-use astroport::{asset::AssetInfo, pair};
-use cosmwasm_std::Decimal;
+use astroport::{
+    asset::AssetInfo,
+    factory::{self, PairType},
+    pair_concentrated::ConcentratedPoolParams,
+};
+use cosmwasm_std::{Binary, Decimal};
 use std::{fs::OpenOptions, io::Write, path::Path};
 
 pub struct CreateOsmoPoolTxBuilder<'a> {
     key: &'a str,
-    label: Option<&'a str>,
-    admin: Option<&'a str>,
     flags: Option<&'a str>,
     pool_type: PoolType,
+    pool_init_params: Option<PoolInitParams>,
     weights: Vec<(u64, &'a str)>,
     initial_deposit: Vec<(u64, &'a str)>,
     swap_fee: Decimal,
@@ -32,18 +34,6 @@ impl<'a> CreateOsmoPoolTxBuilder<'a> {
         self
     }
 
-    pub fn with_label(&mut self, label: &'a str) -> &mut Self {
-        self.label = Some(label);
-
-        self
-    }
-
-    pub fn with_admin(&mut self, admin: &'a str) -> &mut Self {
-        self.admin = Some(admin);
-
-        self
-    }
-
     pub fn with_flags(&mut self, flags: &'a str) -> &mut Self {
         self.flags = Some(flags);
 
@@ -52,6 +42,12 @@ impl<'a> CreateOsmoPoolTxBuilder<'a> {
 
     pub fn with_pool_type(&mut self, pool_type: PoolType) -> &mut Self {
         self.pool_type = pool_type;
+
+        self
+    }
+
+    pub fn with_pool_init_params(&mut self, init_params: PoolInitParams) -> &mut Self {
+        self.pool_init_params = Some(init_params);
 
         self
     }
@@ -90,10 +86,9 @@ impl<'a> CreateOsmoPoolTxBuilder<'a> {
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_create_osmo_pool(
             self.key,
-            self.label,
-            self.admin,
             self.flags,
             self.pool_type,
+            self.pool_init_params.clone(),
             self.weights.iter().cloned(),
             self.initial_deposit.iter().cloned(),
             self.swap_fee,
@@ -153,10 +148,9 @@ impl TestContext {
     pub fn build_tx_create_osmo_pool(&mut self) -> CreateOsmoPoolTxBuilder {
         CreateOsmoPoolTxBuilder {
             key: DEFAULT_KEY,
-            label: Default::default(),
-            admin: Default::default(),
             flags: Default::default(),
             pool_type: PoolType::Xyk,
+            pool_init_params: Default::default(),
             weights: Default::default(),
             initial_deposit: Default::default(),
             swap_fee: Decimal::percent(0),
@@ -170,10 +164,9 @@ impl TestContext {
     fn tx_create_osmo_pool<'a>(
         &mut self,
         key: &str,
-        label: Option<&str>,
-        admin: Option<&str>,
         flags: Option<&str>,
         pool_type: PoolType,
+        pool_params: Option<PoolInitParams>,
         weights: impl Iterator<Item = (u64, &'a str)>,
         initial_deposit: impl Iterator<Item = (u64, &'a str)>,
         swap_fee: Decimal,
@@ -189,13 +182,11 @@ impl TestContext {
                 exit_fee,
                 future_governor,
             ),
-            PoolType::CosmWasm(CosmWasmPoolType::Pcl) => self.tx_create_osmo_pool_pcl(
-                key,
-                label.expect("missing PCL contract instance label"),
-                admin,
-                flags,
-                weights,
-            ),
+            PoolType::CosmWasm(CosmWasmPoolType::Pcl) => match pool_params.unwrap() {
+                PoolInitParams::Pcl(params) => {
+                    self.tx_create_osmo_pool_pcl(key, flags, weights, params)
+                }
+            },
         }
     }
 
@@ -259,13 +250,10 @@ impl TestContext {
     fn tx_create_osmo_pool_pcl<'a>(
         &mut self,
         key: &str,
-        label: &str,
-        admin: Option<&str>,
         flags: Option<&str>,
         weights: impl Iterator<Item = (u64, &'a str)>,
+        init_params: ConcentratedPoolParams,
     ) -> Result<(), Error> {
-        let osmosis = self.get_chain(OSMOSIS_CHAIN_NAME);
-
         // Creating a PCL pool takes a few steps:
         // - Instantiating the contract for the PCL pool
         // - Registering the pool in x/cosmwasmpool
@@ -279,41 +267,28 @@ impl TestContext {
             .map(|denom| AssetInfo::NativeToken { denom })
             .collect::<Vec<_>>();
 
-        // Cw20 base code ID
-        let token_code_id = self
-            .get_contract()
-            .contract(TOKEN_NAME)
-            .src(OSMOSIS_CHAIN_NAME)
-            .get_cw()
-            .code_id
-            .unwrap();
+        let factory = self.get_factory().src(OSMOSIS_CHAIN_NAME).get_cw();
 
-        let factory_addr = osmosis
-            .contract_addrs
-            .get(FACTORY_ON_OSMOSIS_NAME)
-            .unwrap()
-            .clone();
-
-        let mut pcl_contract = self
-            .get_contract()
-            .contract(PAIR_PCL_ON_OSMOSIS_NAME)
-            .src(OSMOSIS_CHAIN_NAME)
-            .get_cw();
-        pcl_contract
-            .instantiate(
+        let receipt = factory
+            .execute(
                 key,
-                &serde_json::to_string(&pair::InstantiateMsg {
+                &serde_json::to_string(&factory::ExecuteMsg::CreatePair {
+                    pair_type: PairType::Custom(String::from("concentrated")),
                     asset_infos,
-                    token_code_id,
-                    factory_addr,
-                    init_params: None,
+                    init_params: Some(Binary(serde_json::to_vec(&init_params).unwrap())),
                 })
                 .unwrap(),
-                label,
-                admin,
-                flags.unwrap_or_default(),
+                &format!(
+                    "--fees 42069420uosmo{} --amount 1000000000uosmo",
+                    flags.map(|flags| format!(" {flags}")).unwrap_or_default()
+                ),
             )
             .unwrap();
+
+        self.guard_tx_errors(
+            OSMOSIS_CHAIN_NAME,
+            receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
+        )?;
 
         Ok(())
     }

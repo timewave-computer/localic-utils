@@ -251,6 +251,8 @@ impl TestContext {
         chain_name: &str,
         owner_addr: impl Into<String>,
     ) -> Result<(), Error> {
+        let native_denom = self.get_native_denom().src(chain_name).get().clone();
+
         let mut contract_a = self
             .get_contract()
             .src(chain_name)
@@ -265,7 +267,7 @@ impl TestContext {
             .as_str(),
             TOKEN_REGISTRY_NAME,
             None,
-            "--gas 1000000",
+            &format!("--gas 1000000 --fees 42069420{native_denom}"),
         )?;
         let addr = contract.address;
 
@@ -296,8 +298,8 @@ impl TestContext {
         factory_owner: impl Into<String>,
     ) -> Result<(), Error> {
         if chain_name == OSMOSIS_CHAIN_NAME {
-            // Osmosis setup should be handled differently with astroport-on-osmosis contracts:
-            return self.tx_create_factory_osmo(key, chain_name);
+            // Osmosis setup should be handled differently with astroport-on-osmosis contract:s
+            return self.tx_create_factory_osmo(key, factory_owner);
         }
 
         // Assume neutron, or some neutron-capable chain, otherwise
@@ -447,8 +449,8 @@ impl TestContext {
         // Enable PCL (custom) pools only
         let contract = contract_a.instantiate(
             key,
-            serde_json::to_string(&factory::InstantiateMsg {
-                pair_configs: vec![PairConfig {
+            &serde_json::to_string(&serde_json::json!({
+                "pair_configs": vec![PairConfig {
                     code_id: pair_pcl_code_id,
                     pair_type: PairType::Custom(String::from(OSMOSIS_PCL_POOL_TYPE_NAME)),
                     total_fee_bps: 100,
@@ -457,25 +459,22 @@ impl TestContext {
                     is_generator_disabled: false,
                     permissioned: false,
                 }],
-                token_code_id,
-                owner: factory_owner.into(),
-                whitelist_code_id,
-                coin_registry_address: native_registry_addr.clone(),
-                fee_address: None,
-                generator_address: None,
-                tracker_config: None,
-            })?
-            .as_str(),
+                "token_code_id": token_code_id,
+                "owner": factory_owner.into(),
+                "whitelist_code_id": whitelist_code_id,
+                "coin_registry_address": native_registry_addr.clone(),
+            }))
+            .unwrap(),
             FACTORY_NAME,
             None,
-            "",
+            &format!("--gas 1000000 --fees 42069420uosmo"),
         )?;
 
         let chain = self.get_mut_chain(OSMOSIS_CHAIN_NAME);
 
         chain
             .contract_addrs
-            .insert(FACTORY_NAME.to_owned(), contract.address);
+            .insert(FACTORY_ON_OSMOSIS_NAME.to_owned(), contract.address);
 
         Ok(())
     }
@@ -503,6 +502,7 @@ impl TestContext {
     ) -> Result<(), Error> {
         // Factory contract instance
         let contract_a = self.get_factory().src(chain).get_cw();
+        let fee_denom = self.get_native_denom().src(chain).get();
 
         // Create the pair
         let tx = contract_a.execute(
@@ -520,7 +520,7 @@ impl TestContext {
                 init_params: None,
             })?
             .as_str(),
-            "--gas 1000000",
+            &format!("--fees 42069420{fee_denom} --gas 1000000"),
         )?;
 
         // Get the address of the createed contract via logs
@@ -561,6 +561,8 @@ impl TestContext {
         slippage_tolerance: Decimal,
         liq_token_receiver: impl Into<String>,
     ) -> Result<(), Error> {
+        let fee_denom = self.get_native_denom().src(chain).get();
+
         // Get the instance from the address
         let pool = self
             .get_astro_pool()
@@ -593,7 +595,7 @@ impl TestContext {
                     min_lp_to_receive: None,
                 })?
                 .as_str(),
-                &format!("--amount {amt_denom_a}{denom_a},{amt_denom_b}{denom_b} --gas 1000000"),
+                &format!("--amount {amt_denom_a}{denom_a},{amt_denom_b}{denom_b} --gas 1000000 --fees 42069420{fee_denom}"),
             )?
             .tx_hash
             .ok_or(Error::TxMissingLogs)?;

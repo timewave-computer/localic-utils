@@ -1,7 +1,11 @@
+use astroport::pair_concentrated::ConcentratedPoolParams;
 use cosmwasm_std::Decimal;
 use localic_utils::{
-    types::contract::MinAmount, ConfigChainBuilder, TestContextBuilder, DEFAULT_KEY,
-    OSMOSIS_CHAIN_NAME,
+    types::{
+        contract::MinAmount,
+        osmosis::{CosmWasmPoolType, PoolInitParams, PoolType},
+    },
+    ConfigChainBuilder, TestContextBuilder, DEFAULT_KEY, OSMOSIS_CHAIN_NAME,
 };
 use std::error::Error;
 
@@ -48,11 +52,34 @@ fn main() -> Result<(), Box<dyn Error>> {
         .send()?;
 
     // Create an osmosis pool
+    ctx.build_tx_create_token_registry()
+        .with_owner(ACC_0_ADDR)
+        .with_chain(OSMOSIS_CHAIN_NAME)
+        .send()?;
+    ctx.build_tx_create_factory()
+        .with_owner(ACC_0_ADDR)
+        .with_chain(OSMOSIS_CHAIN_NAME)
+        .send()?;
+
     ctx.build_tx_create_osmo_pool()
+        .with_pool_type(PoolType::CosmWasm(CosmWasmPoolType::Pcl))
         .with_weight("uosmo", 1)
         .with_weight(&bruhtoken, 1)
         .with_initial_deposit("uosmo", 1)
         .with_initial_deposit(&bruhtoken, 1)
+        .with_pool_init_params(PoolInitParams::Pcl(ConcentratedPoolParams {
+            amp: Decimal::one(),
+            gamma: Decimal::one(),
+            mid_fee: Decimal::one(),
+            out_fee: Decimal::one(),
+            fee_gamma: Decimal::one(),
+            repeg_profit_threshold: Decimal::one(),
+            min_price_scale_delta: Decimal::one(),
+            price_scale: Decimal::one(),
+            ma_half_time: 0,
+            track_asset_balances: None,
+            fee_share: None,
+        }))
         .send()?;
 
     // Get its id
@@ -110,6 +137,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let _ = ctx
         .get_auction()
+        .src(OSMOSIS_CHAIN_NAME)
         .offer_asset("uosmo")
         .ask_asset(
             &ctx.get_tokenfactory_denom()
@@ -120,6 +148,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .get_cw();
     let _ = ctx
         .get_auction()
+        .src(OSMOSIS_CHAIN_NAME)
         .offer_asset("uosmo")
         .ask_asset(
             &ctx.get_tokenfactory_denom()
@@ -129,19 +158,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         )
         .get_cw();
 
-    ctx.build_tx_create_token_registry()
-        .with_owner(ACC_0_ADDR)
-        .with_chain(OSMOSIS_CHAIN_NAME)
-        .send()?;
-    ctx.build_tx_create_factory()
-        .with_owner(ACC_0_ADDR)
-        .with_chain(OSMOSIS_CHAIN_NAME)
-        .send()?;
-    ctx.build_tx_create_pool()
-        .with_denom_a("uosmo")
-        .with_denom_b(bruhtoken.clone())
-        .with_chain(OSMOSIS_CHAIN_NAME)
-        .send()?;
     ctx.build_tx_create_pool()
         .with_denom_a("uosmo")
         .with_denom_b(bruhtoken.clone())

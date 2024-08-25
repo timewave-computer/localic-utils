@@ -621,7 +621,8 @@ impl TestContext {
             }})
             .to_string()
             .as_str(),
-            format!("--amount {amount_denom_a}{denom_a} --fees 42069420{fee_denom}").as_str(),
+            format!("--amount {amount_denom_a}{denom_a} --fees 42069420{fee_denom} --gas 1000000")
+                .as_str(),
         )?;
 
         log::debug!(
@@ -798,6 +799,7 @@ impl TestContext {
         amt_offer_asset: u128,
     ) -> Result<(), Error> {
         let manager = self.get_auctions_manager().src(chain).get_cw();
+        let fee_denom = self.get_native_denom().src(chain).get();
 
         let denom_a = pair.0.as_ref();
 

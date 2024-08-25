@@ -1,6 +1,6 @@
 use crate::{
     types::ibc::{get_prefixed_denom, parse_denom_trace},
-    AUCTIONS_MANAGER_CONTRACT_NAME, TRANSFER_PORT,
+    AUCTIONS_MANAGER_CONTRACT_NAME, FACTORY_ON_OSMOSIS_NAME, TRANSFER_PORT,
 };
 
 use super::{
@@ -153,9 +153,16 @@ impl<'a> TestContextQuery<'a> {
     pub fn get_cw(self) -> CosmWasm<'a> {
         match self.query_type {
             QueryType::Contract => self.get_contract(),
-            QueryType::Factory | QueryType::PriceOracle | QueryType::AuctionsManager => {
-                self.get_deployed_contract()
-            }
+            QueryType::Factory => match self.src_chain.as_deref().unwrap() {
+                OSMOSIS_CHAIN_NAME => self
+                    .contract(FACTORY_ON_OSMOSIS_NAME)
+                    .get_deployed_contract(),
+                _ => self.contract(FACTORY_NAME).get_deployed_contract(),
+            },
+            QueryType::PriceOracle => self.contract(PRICE_ORACLE_NAME).get_deployed_contract(),
+            QueryType::AuctionsManager => self
+                .contract(AUCTIONS_MANAGER_CONTRACT_NAME)
+                .get_deployed_contract(),
             QueryType::Auction => self.get_auction(),
             QueryType::AstroPool => self.get_astro_pool(),
             QueryType::TransferChannel
