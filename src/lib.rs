@@ -35,6 +35,8 @@ pub const OSMOSIS_CHAIN_PREFIX: &str = "osmo";
 pub const OSMOSIS_CHAIN_ADMIN_ADDR: &str = "osmo1hj5fveer5cjtn4wd6wstzugjfdxzl0xpwhpz63";
 pub const OSMOSIS_CHAIN_NAME: &str = "osmosis";
 pub const OSMOSIS_POOLFILE_PATH: &str = "/tmp/pool_file.json";
+pub const OSMOSIS_WHITELIST_PROP_PATH: &str = "/tmp/prop.json";
+pub const OSMOSIS_PCL_POOL_TYPE_NAME: &str = "concentrated";
 
 /// Stride chain info
 pub const STRIDE_CHAIN_ID: &str = "localstride-1";
@@ -48,10 +50,13 @@ pub const AUCTION_CONTRACT_NAME: &str = "auction";
 pub const AUCTIONS_MANAGER_CONTRACT_NAME: &str = "auctions_manager";
 pub const TOKEN_REGISTRY_NAME: &str = "astroport_native_coin_registry";
 pub const FACTORY_NAME: &str = "astroport_factory";
+pub const FACTORY_ON_OSMOSIS_NAME: &str = "astroport_factory_osmosis";
+pub const PAIR_PCL_ON_OSMOSIS_NAME: &str = "astroport_pcl_osmo";
 pub const PAIR_NAME: &str = "astroport_pair";
 pub const STABLE_PAIR_NAME: &str = "astroport_pair_stable";
 pub const TOKEN_NAME: &str = "cw20_base";
 pub const WHITELIST_NAME: &str = "astroport_whitelist";
+pub const CW1_WHITELIST_NAME: &str = "cw1_whitelist";
 pub const PRICE_ORACLE_NAME: &str = "price_oracle";
 
 /// Local ic info
@@ -60,6 +65,7 @@ pub const LOCAL_IC_API_URL: &str = "http://localhost:42069/";
 /// Builder defautls
 pub const ADMIN_KEY: &str = "admin";
 pub const DEFAULT_KEY: &str = "acc0";
+pub const VALIDATOR_KEY: &str = "validator";
 pub const DEFAULT_TRANSFER_PORT: &str = "transfer";
 pub const DEFAULT_AUCTION_LABEL: &str = "auction";
 

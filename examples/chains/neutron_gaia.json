@@ -159,7 +159,7 @@
       "binary": "osmosisd",
       "bech32_prefix": "osmo",
       "docker_image": {
-        "version": "v25.0.4",
+        "version": "v21.0.0",
         "repository": "ghcr.io/strangelove-ventures/heighliner/osmosis"
       },
       "gas_prices": "0.0025%DENOM%",
@@ -177,15 +177,27 @@
         "1317": "1319",
         "9090": "9092"
       },
+      "config_file_overrides": [
+        {
+            "file": "config/app.toml",
+            "paths": {
+                "osmosis-mempool.max-gas-wanted-per-tx": "10000000000"
+            }
+        }
+    ],
       "genesis": {
         "modify": [
+          {
+            "key": "consensus_params.block.max_gas",
+            "value": "10000000000"
+          },
           {
               "key": "app_state.gov.params.voting_period",
               "value": "3s"
           },
           {
               "key": "app_state.gov.params.max_deposit_period",
-              "value": "15s"
+              "value": "3s"
           },
           {
               "key": "app_state.gov.params.min_deposit.0.denom",
