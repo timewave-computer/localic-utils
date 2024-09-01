@@ -1,8 +1,7 @@
 use super::super::{
     super::{
-        error::Error, types::contract::DeployedContractInfo, DEFAULT_KEY, FACTORY_NAME,
-        NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_NAME, PAIR_NAME, STABLE_PAIR_NAME, TOKEN_NAME,
-        TOKEN_REGISTRY_NAME, WHITELIST_NAME,
+        error::Error, DEFAULT_KEY, FACTORY_NAME, NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_NAME,
+        PAIR_NAME, STABLE_PAIR_NAME, TOKEN_NAME, TOKEN_REGISTRY_NAME, WHITELIST_NAME,
     },
     test_context::TestContext,
 };
@@ -218,11 +217,6 @@ impl TestContext {
         owner_addr: impl Into<String>,
     ) -> Result<(), Error> {
         let mut contract_a = self.get_contract(TOKEN_REGISTRY_NAME)?;
-        let code_id = contract_a
-            .code_id
-            .ok_or(Error::MissingContextVariable(String::from(
-                "astroport_token_registry::code_id",
-            )))?;
 
         let contract = contract_a.instantiate(
             key,
@@ -235,24 +229,12 @@ impl TestContext {
             "--gas 1000000",
         )?;
         let addr = contract.address;
-        let artifact_path =
-            contract_a
-                .file_path
-                .ok_or(Error::MissingContextVariable(String::from(
-                    "astroport_token_registry::artifact_path",
-                )))?;
 
         let neutron = self.get_mut_chain(NEUTRON_CHAIN_NAME);
 
         neutron
             .contract_addrs
             .insert(TOKEN_REGISTRY_NAME.to_owned(), addr.clone());
-
-        self.astroport_token_registry = Some(DeployedContractInfo {
-            code_id,
-            address: addr,
-            artifact_path,
-        });
 
         Ok(())
     }

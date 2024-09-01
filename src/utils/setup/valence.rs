@@ -1,10 +1,7 @@
 use super::super::{
     super::{
         error::Error,
-        types::contract::{
-            AuctionStrategy, ChainHaltConfig, DeployedContractInfo, MinAmount,
-            PriceFreshnessStrategy,
-        },
+        types::contract::{AuctionStrategy, ChainHaltConfig, MinAmount, PriceFreshnessStrategy},
         AUCTIONS_MANAGER_CONTRACT_NAME, AUCTION_CONTRACT_NAME, DEFAULT_AUCTION_LABEL, DEFAULT_KEY,
         NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_NAME, PRICE_ORACLE_NAME,
     },
@@ -422,16 +419,6 @@ impl TestContext {
             None,
             "",
         )?;
-
-        self.auctions_manager = Some(DeployedContractInfo {
-            code_id: contract_a.code_id.ok_or(Error::Misc(format!(
-                "contract '{AUCTIONS_MANAGER_CONTRACT_NAME}' has no code ID"
-            )))?,
-            address: contract.address.clone(),
-            artifact_path: contract_a.file_path.ok_or(Error::Misc(format!(
-                "contract '{AUCTIONS_MANAGER_CONTRACT_NAME}' has no file path"
-            )))?,
-        });
 
         let chain = self.get_mut_chain(NEUTRON_CHAIN_NAME);
 

@@ -5,9 +5,9 @@ use crate::{
 
 use super::{
     super::{
-        error::Error, AUCTION_CONTRACT_NAME, FACTORY_NAME, NEUTRON_CHAIN_NAME, OSMOSIS_CHAIN_NAME,
-        PAIR_NAME, PRICE_ORACLE_NAME, STABLE_PAIR_NAME, TX_HASH_QUERY_PAUSE_SEC,
-        TX_HASH_QUERY_RETRIES,
+        error::Error, AUCTIONS_MANAGER_CONTRACT_NAME, AUCTION_CONTRACT_NAME, FACTORY_NAME,
+        NEUTRON_CHAIN_NAME, OSMOSIS_CHAIN_NAME, PAIR_NAME, PRICE_ORACLE_NAME, STABLE_PAIR_NAME,
+        TX_HASH_QUERY_PAUSE_SEC, TX_HASH_QUERY_RETRIES,
     },
     test_context::TestContext,
 };
@@ -84,18 +84,20 @@ impl TestContext {
     pub fn get_auctions_manager(&self) -> Result<CosmWasm, Error> {
         let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
 
-        let contract_info = self
-            .auctions_manager
-            .as_ref()
-            .ok_or(Error::MissingContextVariable(String::from(
-                "auctions_manager",
-            )))?;
+        let contract_addr = neutron
+            .contract_addrs
+            .get(AUCTIONS_MANAGER_CONTRACT_NAME)
+            .unwrap();
+        let code_id = neutron
+            .contract_codes
+            .get(AUCTIONS_MANAGER_CONTRACT_NAME)
+            .unwrap();
 
         Ok(CosmWasm::new_from_existing(
             &neutron.rb,
-            Some(contract_info.artifact_path.clone()),
-            Some(contract_info.code_id),
-            Some(contract_info.address.clone()),
+            None,
+            Some(*code_id),
+            Some(contract_addr.clone()),
         ))
     }
 
