@@ -12,7 +12,7 @@ use std::error::Error;
 const ACC_0_ADDR: &str = "osmo1hj5fveer5cjtn4wd6wstzugjfdxzl0xpwhpz63";
 const LOCAL_CODE_ID_CACHE_PATH: &str = "code_id_cache_osmo.json";
 
-const TEST_TOKEN_1_NAME: &str = "bruhtoken";
+const TEST_TOKEN_1_NAME: &str = "bruhtoken1000";
 
 /// Demonstrates using localic-utils for neutron.
 fn main() -> Result<(), Box<dyn Error>> {
@@ -33,6 +33,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         OSMOSIS_CHAIN_NAME,
         LOCAL_CODE_ID_CACHE_PATH,
     )?;
+
+    // Whitelist the PCL contract
+    ctx.build_tx_whitelist_cosmwasm_pool()
+        .with_contract_path("contracts_osmosis/astroport_pcl_osmo.wasm")
+        .send()?;
 
     // Create some tokens on osmosis
     ctx.build_tx_create_tokenfactory_token()

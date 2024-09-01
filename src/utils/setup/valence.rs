@@ -812,7 +812,8 @@ impl TestContext {
             })
             .to_string()
             .as_str(),
-            format!("--amount {amt_offer_asset}{denom_a} --gas 1000000").as_str(),
+            format!("--amount {amt_offer_asset}{denom_a} --gas 1000000 --fees 42069420{fee_denom}")
+                .as_str(),
         )?;
 
         self.guard_tx_errors(chain, receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str())?;

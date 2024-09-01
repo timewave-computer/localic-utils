@@ -446,6 +446,8 @@ impl TestContext {
                     "contract_ddrs::astroport_native_coin_registry",
                 )))?;
 
+        println!("B: {:?}", pair_pcl_code_id);
+
         // Enable PCL (custom) pools only
         let contract = contract_a.instantiate(
             key,
