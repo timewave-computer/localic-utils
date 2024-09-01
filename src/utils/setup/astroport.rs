@@ -217,7 +217,11 @@ impl TestContext {
         key: &str,
         owner_addr: impl Into<String>,
     ) -> Result<(), Error> {
-        let mut contract_a = self.get_contract(TOKEN_REGISTRY_NAME)?;
+        let mut contract_a = self
+            .get_contract()
+            .src(NEUTRON_CHAIN_NAME)
+            .contract(TOKEN_REGISTRY_NAME)
+            .get_cw();
         let code_id = contract_a
             .code_id
             .ok_or(Error::MissingContextVariable(String::from(
@@ -309,7 +313,11 @@ impl TestContext {
             )),
         )?;
 
-        let mut contract_a = self.get_contract(FACTORY_NAME)?;
+        let mut contract_a = self
+            .get_contract()
+            .src(NEUTRON_CHAIN_NAME)
+            .contract(FACTORY_NAME)
+            .get_cw();
 
         let contract = contract_a.instantiate(
             key,
@@ -377,7 +385,7 @@ impl TestContext {
         denom_b: impl Into<String>,
     ) -> Result<(), Error> {
         // Factory contract instance
-        let contract_a = self.get_astroport_factory()?;
+        let contract_a = self.get_factory().src(NEUTRON_CHAIN_NAME).get_cw();
 
         // Create the pair
         let tx = contract_a.execute(
@@ -427,18 +435,19 @@ impl TestContext {
     fn tx_fund_pool(
         &mut self,
         key: &str,
-        denom_a: impl Into<String> + AsRef<str>,
-        denom_b: impl Into<String> + AsRef<str>,
+        denom_a: String,
+        denom_b: String,
         amt_denom_a: u128,
         amt_denom_b: u128,
         slippage_tolerance: Decimal,
         liq_token_receiver: impl Into<String>,
     ) -> Result<(), Error> {
         // Get the instance from the address
-        let pool = self.get_astroport_pool(denom_a.as_ref(), denom_b.as_ref())?;
-
-        let denom_a = denom_a.into();
-        let denom_b = denom_b.into();
+        let pool = self
+            .get_astro_pool()
+            .src(NEUTRON_CHAIN_NAME)
+            .denoms(denom_a.clone(), denom_b.clone())
+            .get_cw();
 
         // Provide liquidity
         let tx = pool

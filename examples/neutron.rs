@@ -39,8 +39,16 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_subdenom(TEST_TOKEN_2_NAME)
         .send()?;
 
-    let bruhtoken = ctx.get_tokenfactory_denom(ACC_0_ADDR, TEST_TOKEN_1_NAME);
-    let amoguscoin = ctx.get_tokenfactory_denom(ACC_0_ADDR, TEST_TOKEN_2_NAME);
+    let bruhtoken = ctx
+        .get_tokenfactory_denom()
+        .creator(ACC_0_ADDR)
+        .subdenom(TEST_TOKEN_1_NAME.to_owned())
+        .get();
+    let amoguscoin = ctx
+        .get_tokenfactory_denom()
+        .creator(ACC_0_ADDR)
+        .subdenom(TEST_TOKEN_2_NAME.to_owned())
+        .get();
 
     // Deploy valence auctions
     ctx.build_tx_create_auctions_manager()
@@ -81,14 +89,26 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_amount_offer_asset(10000)
         .send()?;
 
-    ctx.get_auction((
-        "untrn",
-        ctx.get_tokenfactory_denom(ACC_0_ADDR, TEST_TOKEN_1_NAME),
-    ))?;
-    ctx.get_auction((
-        "untrn",
-        ctx.get_tokenfactory_denom(ACC_0_ADDR, TEST_TOKEN_2_NAME),
-    ))?;
+    let _ = ctx
+        .get_auction()
+        .offer_asset("untrn")
+        .ask_asset(
+            &ctx.get_tokenfactory_denom()
+                .creator(ACC_0_ADDR)
+                .subdenom(TEST_TOKEN_1_NAME.to_owned())
+                .get(),
+        )
+        .get_cw();
+    let _ = ctx
+        .get_auction()
+        .offer_asset("untrn")
+        .ask_asset(
+            &ctx.get_tokenfactory_denom()
+                .creator(ACC_0_ADDR)
+                .subdenom(TEST_TOKEN_2_NAME.to_owned())
+                .get(),
+        )
+        .get_cw();
 
     ctx.build_tx_create_token_registry()
         .with_owner(ACC_0_ADDR)
@@ -105,10 +125,16 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_denom_b(bruhtoken)
         .send()?;
 
-    let pool = ctx.get_astroport_pool(
-        "untrn",
-        ctx.get_tokenfactory_denom(ACC_0_ADDR, TEST_TOKEN_2_NAME),
-    )?;
+    let pool = ctx
+        .get_astro_pool()
+        .denoms(
+            "untrn".to_owned(),
+            ctx.get_tokenfactory_denom()
+                .creator(ACC_0_ADDR)
+                .subdenom(TEST_TOKEN_2_NAME.to_owned())
+                .get(),
+        )
+        .get_cw();
 
     assert!(pool
         .query_value(&serde_json::json!({
@@ -140,8 +166,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         .send()?;
 
     let factory_contract_code_id = ctx
-        .get_contract("astroport_whitelist")
-        .unwrap()
+        .get_contract()
+        .contract("astroport_whitelist")
+        .get_cw()
         .code_id
         .unwrap();
 
@@ -165,7 +192,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .salt_hex_encoded(hex::encode("examplesalt").as_str())
         .get();
 
-    let mut cw = ctx.get_contract("astroport_whitelist").unwrap();
+    let mut cw = ctx.get_contract().contract("astroport_whitelist").get_cw();
     cw.contract_addr = Some(addr);
 
     cw.execute(
