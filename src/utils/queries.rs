@@ -153,10 +153,10 @@ impl<'a> TestContextQuery<'a> {
     pub fn get_cw(self) -> CosmWasm<'a> {
         match self.query_type {
             QueryType::Contract => self.get_contract(),
-            QueryType::Factory
-            | QueryType::Auction
-            | QueryType::PriceOracle
-            | QueryType::AuctionsManager => self.get_deployed_contract(),
+            QueryType::Auction => self.get_auction(),
+            QueryType::Factory | QueryType::PriceOracle | QueryType::AuctionsManager => {
+                self.get_deployed_contract()
+            }
             QueryType::AstroPool => self.get_astro_pool(),
             QueryType::TransferChannel
             | QueryType::Connection
@@ -406,6 +406,34 @@ impl<'a> TestContextQuery<'a> {
             Some(*code_id),
             Some(contract_addr),
         ))
+    }
+
+    fn get_auction(&self) -> Option<CosmWasm<'a>> {
+        let auction_manager = self
+            .context
+            .get_auctions_manager()
+            .src(self.src_chain.as_deref()?)
+            .get_cw();
+        let denoms = (self.offer_asset.as_deref()?, self.ask_asset.as_deref()?);
+
+        let resp = auction_manager.query(
+            &serde_json::to_string(&serde_json::json!({
+                "get_pair_addr": {
+                    "pair": denoms,
+                }}
+            ))
+            .unwrap(),
+        );
+
+        let mut cw = self
+            .context
+            .get_contract()
+            .contract(PAIR_NAME)
+            .src(self.src_chain.as_deref()?)
+            .get_cw();
+        cw.contract_addr = Some(resp["data"].as_str()?.to_owned());
+
+        Some(cw)
     }
 
     fn get_astro_pool(&self) -> Option<CosmWasm<'a>> {
