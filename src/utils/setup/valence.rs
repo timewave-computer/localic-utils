@@ -395,7 +395,10 @@ impl TestContext {
         min_auction_amount: impl AsRef<[(&'a str, MinAmount)]>,
         server_addr: impl AsRef<str>,
     ) -> Result<(), Error> {
-        let mut contract_a: CosmWasm = self.get_contract(AUCTIONS_MANAGER_CONTRACT_NAME)?;
+        let mut contract_a: CosmWasm = self
+            .get_contract()
+            .contract(AUCTIONS_MANAGER_CONTRACT_NAME)
+            .get_cw();
         let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
 
         let auction_code_id =
@@ -446,7 +449,7 @@ impl TestContext {
         seconds_allow_manual_change: u64,
         seconds_auction_prices_fresh: u64,
     ) -> Result<(), Error> {
-        let auctions_manager: CosmWasm = self.get_auctions_manager()?;
+        let auctions_manager: CosmWasm = self.get_auctions_manager().get_cw();
         let auctions_manager_addr =
             auctions_manager
                 .contract_addr
@@ -454,7 +457,7 @@ impl TestContext {
                     "contract_addresses::auctions_manager",
                 )))?;
 
-        let mut contract_a = self.get_contract(PRICE_ORACLE_NAME)?;
+        let mut contract_a = self.get_contract().contract(PRICE_ORACLE_NAME).get_cw();
         let contract = contract_a.instantiate(
             sender_key,
             serde_json::json!({
@@ -515,7 +518,7 @@ impl TestContext {
         amount_denom_a: u128,
     ) -> Result<(), Error> {
         // The auctions manager for this deployment
-        let contract_a = self.get_auctions_manager()?;
+        let contract_a = self.get_auctions_manager().get_cw();
         let denom_a = pair.0.as_ref();
 
         let receipt = contract_a.execute(
@@ -570,10 +573,15 @@ impl TestContext {
         pair: (TDenomA, TDenomB),
     ) -> Result<(), Error> {
         // The auctions manager for this deployment
-        let contract_a = self.get_auctions_manager()?;
-        let code_id = self.get_contract(AUCTION_CONTRACT_NAME)?.code_id.ok_or(
-            Error::MissingContextVariable(String::from("code_ids::auction")),
-        )?;
+        let contract_a = self.get_auctions_manager().get_cw();
+        let code_id = self
+            .get_contract()
+            .contract(AUCTION_CONTRACT_NAME)
+            .get_cw()
+            .code_id
+            .ok_or(Error::MissingContextVariable(String::from(
+                "code_ids::auction",
+            )))?;
 
         let receipt = contract_a.execute(
             sender_key,
@@ -618,7 +626,7 @@ impl TestContext {
 
     fn tx_update_auction_oracle(&mut self, sender_key: &str) -> Result<(), Error> {
         // The auctions manager for this deployment
-        let contract_a = self.get_auctions_manager()?;
+        let contract_a = self.get_auctions_manager().get_cw();
         let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
         let oracle =
             neutron
@@ -669,7 +677,7 @@ impl TestContext {
         price: Decimal,
     ) -> Result<(), Error> {
         // The auctions manager for this deployment
-        let oracle = self.get_price_oracle()?;
+        let oracle = self.get_price_oracle().get_cw();
 
         let receipt = oracle.execute(
             sender_key,
@@ -711,7 +719,7 @@ impl TestContext {
         pair: (TDenomA, TDenomB),
         amt_offer_asset: u128,
     ) -> Result<(), Error> {
-        let manager = self.get_auctions_manager()?;
+        let manager = self.get_auctions_manager().get_cw();
 
         let denom_a = pair.0.as_ref();
 
@@ -753,7 +761,7 @@ impl TestContext {
         end_blocks: u128,
         pair: (TDenomA, TDenomB),
     ) -> Result<(), Error> {
-        let manager = self.get_auctions_manager()?;
+        let manager = self.get_auctions_manager().get_cw();
         let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
 
         let start_block_resp = neutron

@@ -32,7 +32,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_chain_name("neutron")
         .with_subdenom("bruhtoken")
         .send()?;
-    let bruhtoken = ctx.get_tokenfactory_denom(NEUTRON_ACC_0_ADDR, "bruhtoken");
+    let bruhtoken = ctx
+        .get_tokenfactory_denom()
+        .creator(NEUTRON_ACC_0_ADDR)
+        .subdenom("bruhtoken".into())
+        .get();
     ctx.build_tx_mint_tokenfactory_token()
         .with_chain_name("neutron")
         .with_amount(10000000000000000000)
@@ -53,8 +57,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_amount(1000000)
         .send()?;
 
-    let ibc_bruhtoken = ctx.get_ibc_denom(&bruhtoken, "neutron", "osmosis");
-    let ibc_neutron = ctx.get_ibc_denom("untrn", "neutron", "osmosis");
+    let ibc_bruhtoken = ctx
+        .get_ibc_denom()
+        .base_denom(bruhtoken.clone())
+        .src("neutron")
+        .dest("osmosis")
+        .get();
+    let ibc_neutron = ctx
+        .get_ibc_denom()
+        .base_denom("untrn".into())
+        .src("neutron")
+        .dest("osmosis")
+        .get();
 
     // Create an osmosis pool
     ctx.build_tx_create_osmo_pool()
@@ -65,7 +79,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         .send()?;
 
     // Get its id
-    let pool_id = ctx.get_osmo_pool(&ibc_neutron, &ibc_bruhtoken)?;
+    let pool_id = ctx
+        .get_osmo_pool()
+        .denoms(ibc_neutron.clone(), ibc_bruhtoken.clone())
+        .get_u64();
 
     // Fund the pool
     ctx.build_tx_fund_osmo_pool()
