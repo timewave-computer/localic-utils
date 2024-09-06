@@ -466,15 +466,14 @@ impl TestContext {
             .contract(AUCTIONS_MANAGER_CONTRACT_NAME)
             .src(chain)
             .get_cw();
-        let neutron = self.get_chain(chain);
+        let local_chain = self.get_chain(chain);
 
-        let auction_code_id =
-            neutron
-                .contract_codes
-                .get(AUCTION_CONTRACT_NAME)
-                .ok_or(Error::Misc(format!(
-                    "contract '{AUCTION_CONTRACT_NAME}' is missing"
-                )))?;
+        let auction_code_id = local_chain
+            .contract_codes
+            .get(AUCTION_CONTRACT_NAME)
+            .ok_or(Error::Misc(format!(
+                "contract '{AUCTION_CONTRACT_NAME}' is missing"
+            )))?;
 
         let contract = contract_a.instantiate(
             sender_key,
@@ -490,9 +489,9 @@ impl TestContext {
             "",
         )?;
 
-        let chain = self.get_mut_chain(NEUTRON_CHAIN_NAME);
+        let local_chain = self.get_mut_chain(chain);
 
-        chain
+        local_chain
             .contract_addrs
             .insert(AUCTIONS_MANAGER_CONTRACT_NAME.to_owned(), contract.address);
 
@@ -545,7 +544,7 @@ impl TestContext {
             "",
         )?;
 
-        let chain = self.get_mut_chain(NEUTRON_CHAIN_NAME);
+        let chain = self.get_mut_chain(chain);
 
         chain
             .contract_addrs
@@ -623,10 +622,7 @@ impl TestContext {
             receipt
         );
 
-        self.guard_tx_errors(
-            NEUTRON_CHAIN_NAME,
-            receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
-        )?;
+        self.guard_tx_errors(chain, receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str())?;
 
         Ok(())
     }
@@ -686,10 +682,7 @@ impl TestContext {
             receipt
         );
 
-        self.guard_tx_errors(
-            NEUTRON_CHAIN_NAME,
-            receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
-        )?;
+        self.guard_tx_errors(chain, receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str())?;
 
         Ok(())
     }
@@ -706,14 +699,10 @@ impl TestContext {
     fn tx_update_auction_oracle(&mut self, sender_key: &str, chain: &str) -> Result<(), Error> {
         // The auctions manager for this deployment
         let contract_a = self.get_auctions_manager().src(chain).get_cw();
-        let neutron = self.get_chain(chain);
-        let oracle =
-            neutron
-                .contract_addrs
-                .get(PRICE_ORACLE_NAME)
-                .ok_or(Error::MissingContextVariable(String::from(
-                    "contract_addrs::price_oracle",
-                )))?;
+        let local_chain = self.get_chain(chain);
+        let oracle = local_chain.contract_addrs.get(PRICE_ORACLE_NAME).ok_or(
+            Error::MissingContextVariable(String::from("contract_addrs::price_oracle")),
+        )?;
 
         let receipt = contract_a.execute(
             sender_key,
@@ -729,10 +718,7 @@ impl TestContext {
             "--gas 2000000",
         )?;
 
-        self.guard_tx_errors(
-            NEUTRON_CHAIN_NAME,
-            receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
-        )?;
+        self.guard_tx_errors(chain, receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str())?;
 
         Ok(())
     }
@@ -774,10 +760,7 @@ impl TestContext {
             "--gas 2000000",
         )?;
 
-        self.guard_tx_errors(
-            NEUTRON_CHAIN_NAME,
-            receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
-        )?;
+        self.guard_tx_errors(chain, receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str())?;
 
         Ok(())
     }
@@ -818,10 +801,7 @@ impl TestContext {
             format!("--amount {amt_offer_asset}{denom_a} --gas 1000000").as_str(),
         )?;
 
-        self.guard_tx_errors(
-            NEUTRON_CHAIN_NAME,
-            receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
-        )?;
+        self.guard_tx_errors(chain, receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str())?;
 
         Ok(())
     }
@@ -847,9 +827,9 @@ impl TestContext {
         pair: (TDenomA, TDenomB),
     ) -> Result<(), Error> {
         let manager = self.get_auctions_manager().src(chain).get_cw();
-        let neutron = self.get_chain(chain);
+        let local_chain = self.get_chain(chain);
 
-        let start_block_resp = neutron
+        let start_block_resp = local_chain
             .rb
             .bin("q block --node=%RPC% --chain-id=%CHAIN_ID%", true);
         let maybe_start_block_data: Value = start_block_resp
@@ -885,10 +865,7 @@ impl TestContext {
             "--gas 1000000",
         )?;
 
-        self.guard_tx_errors(
-            NEUTRON_CHAIN_NAME,
-            receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str(),
-        )?;
+        self.guard_tx_errors(chain, receipt.tx_hash.ok_or(Error::TxMissingLogs)?.as_str())?;
 
         Ok(())
     }
