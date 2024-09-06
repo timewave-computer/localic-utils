@@ -2,7 +2,6 @@ use super::super::{
     error::Error,
     types::{
         config::{ConfigChain, Logs},
-        contract::DeployedContractInfo,
         ibc::Channel as QueryChannel,
     },
     ICTEST_HOME_VAR, LOCAL_IC_API_URL, TRANSFER_PORT,
@@ -352,9 +351,6 @@ impl TestContextBuilder {
             artifacts_dir: artifacts_dir
                 .clone()
                 .ok_or(Error::MissingBuilderParam(String::from("artifacts_dir")))?,
-            auctions_manager: None,
-            astroport_token_registry: None,
-            astroport_factory: None,
             unwrap_logs: *unwrap_raw_logs,
             log_file,
         })
@@ -374,13 +370,6 @@ pub struct TestContext {
     pub ibc_denoms: HashMap<(String, String), String>,
     /// The path to .wasm contract artifacts
     pub artifacts_dir: String,
-
-    /// Valence deployment info
-    pub auctions_manager: Option<DeployedContractInfo>,
-
-    /// Astroport deployment info
-    pub astroport_token_registry: Option<DeployedContractInfo>,
-    pub astroport_factory: Option<DeployedContractInfo>,
 
     /// Whether or not logs should be expected and guarded for each tx
     pub unwrap_logs: bool,
