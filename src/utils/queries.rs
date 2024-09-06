@@ -1,6 +1,6 @@
 use crate::{
     types::ibc::{get_prefixed_denom, parse_denom_trace},
-    AUCTIONS_MANAGER_CONTRACT_NAME, TRANSFER_PORT,
+    TRANSFER_PORT,
 };
 
 use super::{
