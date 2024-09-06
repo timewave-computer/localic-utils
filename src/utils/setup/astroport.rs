@@ -221,11 +221,6 @@ impl TestContext {
             .src(NEUTRON_CHAIN_NAME)
             .contract(TOKEN_REGISTRY_NAME)
             .get_cw();
-        let code_id = contract_a
-            .code_id
-            .ok_or(Error::MissingContextVariable(String::from(
-                "astroport_token_registry::code_id",
-            )))?;
 
         let contract = contract_a.instantiate(
             key,
