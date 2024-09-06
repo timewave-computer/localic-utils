@@ -1,7 +1,8 @@
 use super::super::{
     super::{
-        error::Error, DEFAULT_KEY, FACTORY_NAME, NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_NAME,
-        PAIR_NAME, STABLE_PAIR_NAME, TOKEN_NAME, TOKEN_REGISTRY_NAME, WHITELIST_NAME,
+        error::Error, CW1_WHITELIST_NAME, DEFAULT_KEY, FACTORY_NAME, FACTORY_ON_OSMOSIS_NAME,
+        NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_NAME, OSMOSIS_CHAIN_NAME, PAIR_NAME,
+        STABLE_PAIR_NAME, TOKEN_NAME, TOKEN_REGISTRY_NAME, WHITELIST_NAME,
     },
     test_context::TestContext,
 };
@@ -22,6 +23,12 @@ pub struct CreateTokenRegistryTxBuilder<'a> {
 impl<'a> CreateTokenRegistryTxBuilder<'a> {
     pub fn with_key(&mut self, key: &'a str) -> &mut Self {
         self.key = Some(key);
+
+        self
+    }
+
+    pub fn with_chain(&mut self, chain: &'a str) -> &mut Self {
+        self.chain = chain;
 
         self
     }
@@ -258,7 +265,7 @@ impl TestContext {
         key: &str,
         factory_owner: impl Into<String>,
     ) -> Result<(), Error> {
-        let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
+        let chain = self.get_chain(chain_name);
 
         let pair_xyk_code_id =
             neutron

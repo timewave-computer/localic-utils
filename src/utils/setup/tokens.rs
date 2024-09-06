@@ -18,7 +18,7 @@ impl<'a> CreateTokenFactoryTokenTxBuilder<'a> {
         self
     }
 
-    pub fn with_chain_name(&mut self, chain_name: impl Into<String>) -> &mut Self {
+    pub fn with_chain(&mut self, chain_name: impl Into<String>) -> &mut Self {
         self.chain_name = Some(chain_name.into());
 
         self
@@ -61,7 +61,7 @@ impl<'a> MintTokenFactoryTokenTxBuilder<'a> {
         self
     }
 
-    pub fn with_chain_name(&mut self, chain_name: impl Into<String>) -> &mut Self {
+    pub fn with_chain(&mut self, chain_name: impl Into<String>) -> &mut Self {
         self.chain_name = Some(chain_name.into());
 
         self
