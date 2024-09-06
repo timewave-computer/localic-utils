@@ -14,6 +14,7 @@ use serde_json::Value;
 /// A tx creating an auctions manager.
 pub struct CreateAuctionsManagerTxBuilder<'a> {
     key: &'a str,
+    chain: &'a str,
     min_auction_amount: &'a [(&'a str, MinAmount)],
     server_addr: &'a str,
     test_ctx: &'a mut TestContext,
@@ -25,6 +26,13 @@ impl<'a> CreateAuctionsManagerTxBuilder<'a> {
 
         self
     }
+
+    pub fn with_chain(&mut self, chain: &'a str) -> &mut Self {
+        self.chain = chain;
+
+        self
+    }
+
     pub fn with_min_auction_amount(
         &mut self,
         min_auction_amount: &'a [(&'a str, MinAmount)],
@@ -44,6 +52,7 @@ impl<'a> CreateAuctionsManagerTxBuilder<'a> {
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_create_auctions_manager(
             self.key,
+            self.chain,
             self.min_auction_amount,
             self.server_addr,
         )
@@ -52,6 +61,7 @@ impl<'a> CreateAuctionsManagerTxBuilder<'a> {
 
 pub struct CreateAuctionTxBuilder<'a> {
     key: &'a str,
+    chain: &'a str,
     offer_asset: Option<&'a str>,
     ask_asset: Option<&'a str>,
     auction_strategy: AuctionStrategy,
@@ -65,6 +75,12 @@ pub struct CreateAuctionTxBuilder<'a> {
 impl<'a> CreateAuctionTxBuilder<'a> {
     pub fn with_key(&mut self, key: &'a str) -> &mut Self {
         self.key = key;
+
+        self
+    }
+
+    pub fn with_chain(&mut self, chain: &'a str) -> &mut Self {
+        self.chain = chain;
 
         self
     }
@@ -118,6 +134,7 @@ impl<'a> CreateAuctionTxBuilder<'a> {
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_create_auction(
             self.key,
+            self.chain,
             (
                 self.offer_asset
                     .ok_or(Error::MissingBuilderParam(String::from("pair")))?,
@@ -138,6 +155,7 @@ impl<'a> CreateAuctionTxBuilder<'a> {
 
 pub struct FundAuctionTxBuilder<'a> {
     key: &'a str,
+    chain: &'a str,
     offer_asset: Option<&'a str>,
     ask_asset: Option<&'a str>,
     amt_offer_asset: Option<u128>,
@@ -147,6 +165,12 @@ pub struct FundAuctionTxBuilder<'a> {
 impl<'a> FundAuctionTxBuilder<'a> {
     pub fn with_key(&mut self, key: &'a str) -> &mut Self {
         self.key = key;
+
+        self
+    }
+
+    pub fn with_chain(&mut self, chain: &'a str) -> &mut Self {
+        self.chain = chain;
 
         self
     }
@@ -173,6 +197,7 @@ impl<'a> FundAuctionTxBuilder<'a> {
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_fund_auction(
             self.key,
+            self.chain,
             (
                 self.offer_asset
                     .ok_or(Error::MissingBuilderParam(String::from("pair")))?,
@@ -189,6 +214,7 @@ impl<'a> FundAuctionTxBuilder<'a> {
 
 pub struct StartAuctionTxBuilder<'a> {
     key: &'a str,
+    chain: &'a str,
     offer_asset: Option<&'a str>,
     ask_asset: Option<&'a str>,
     end_block_delta: Option<u128>,
@@ -198,6 +224,12 @@ pub struct StartAuctionTxBuilder<'a> {
 impl<'a> StartAuctionTxBuilder<'a> {
     pub fn with_key(&mut self, key: &'a str) -> &mut Self {
         self.key = key;
+
+        self
+    }
+
+    pub fn with_chain(&mut self, chain: &'a str) -> &mut Self {
+        self.chain = chain;
 
         self
     }
@@ -224,6 +256,7 @@ impl<'a> StartAuctionTxBuilder<'a> {
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_start_auction(
             self.key,
+            self.chain,
             self.end_block_delta
                 .ok_or(Error::MissingBuilderParam(String::from("end_block_delta")))?,
             (
@@ -238,6 +271,7 @@ impl<'a> StartAuctionTxBuilder<'a> {
 
 pub struct MigrateAuctionTxBuilder<'a> {
     key: &'a str,
+    chain: &'a str,
     offer_asset: Option<&'a str>,
     ask_asset: Option<&'a str>,
     test_ctx: &'a mut TestContext,
@@ -246,6 +280,12 @@ pub struct MigrateAuctionTxBuilder<'a> {
 impl<'a> MigrateAuctionTxBuilder<'a> {
     pub fn with_key(&mut self, key: &'a str) -> &mut Self {
         self.key = key;
+
+        self
+    }
+
+    pub fn with_chain(&mut self, chain: &'a str) -> &mut Self {
+        self.chain = chain;
 
         self
     }
@@ -266,6 +306,7 @@ impl<'a> MigrateAuctionTxBuilder<'a> {
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_migrate_auction(
             self.key,
+            self.chain,
             (
                 self.offer_asset
                     .ok_or(Error::MissingBuilderParam(String::from("pair")))?,
@@ -278,6 +319,7 @@ impl<'a> MigrateAuctionTxBuilder<'a> {
 
 pub struct CreatePriceOracleTxBuilder<'a> {
     key: &'a str,
+    chain: &'a str,
     seconds_allow_manual_change: u64,
     seconds_auction_prices_fresh: u64,
     test_ctx: &'a mut TestContext,
@@ -286,6 +328,12 @@ pub struct CreatePriceOracleTxBuilder<'a> {
 impl<'a> CreatePriceOracleTxBuilder<'a> {
     pub fn with_key(&mut self, key: &'a str) -> &mut Self {
         self.key = key;
+
+        self
+    }
+
+    pub fn with_chain(&mut self, chain: &'a str) -> &mut Self {
+        self.chain = chain;
 
         self
     }
@@ -306,6 +354,7 @@ impl<'a> CreatePriceOracleTxBuilder<'a> {
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_create_price_oracle(
             self.key,
+            self.chain,
             self.seconds_allow_manual_change,
             self.seconds_auction_prices_fresh,
         )
@@ -314,6 +363,7 @@ impl<'a> CreatePriceOracleTxBuilder<'a> {
 
 pub struct UpdateAuctionOracleTxBuilder<'a> {
     key: &'a str,
+    chain: &'a str,
     test_ctx: &'a mut TestContext,
 }
 
@@ -324,14 +374,21 @@ impl<'a> UpdateAuctionOracleTxBuilder<'a> {
         self
     }
 
+    pub fn with_chain(&mut self, chain: &'a str) -> &mut Self {
+        self.chain = chain;
+
+        self
+    }
+
     /// Sends the transaction.
     pub fn send(&mut self) -> Result<(), Error> {
-        self.test_ctx.tx_update_auction_oracle(self.key)
+        self.test_ctx.tx_update_auction_oracle(self.key, self.chain)
     }
 }
 
 pub struct ManualOraclePriceUpdateTxBuilder<'a> {
     key: &'a str,
+    chain: &'a str,
     offer_asset: Option<&'a str>,
     ask_asset: Option<&'a str>,
     price: Option<Decimal>,
@@ -341,6 +398,12 @@ pub struct ManualOraclePriceUpdateTxBuilder<'a> {
 impl<'a> ManualOraclePriceUpdateTxBuilder<'a> {
     pub fn with_key(&mut self, key: &'a str) -> &mut Self {
         self.key = key;
+
+        self
+    }
+
+    pub fn with_chain(&mut self, chain: &'a str) -> &mut Self {
+        self.chain = chain;
 
         self
     }
@@ -367,6 +430,7 @@ impl<'a> ManualOraclePriceUpdateTxBuilder<'a> {
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_manual_oracle_price_update(
             self.key,
+            self.chain,
             self.offer_asset
                 .ok_or(Error::MissingBuilderParam(String::from("offer_asset")))?,
             self.ask_asset
@@ -381,6 +445,7 @@ impl TestContext {
     pub fn build_tx_create_auctions_manager(&mut self) -> CreateAuctionsManagerTxBuilder {
         CreateAuctionsManagerTxBuilder {
             key: DEFAULT_KEY,
+            chain: NEUTRON_CHAIN_NAME,
             min_auction_amount: &[],
             server_addr: NEUTRON_CHAIN_ADMIN_ADDR,
             test_ctx: self,
@@ -392,14 +457,16 @@ impl TestContext {
     fn tx_create_auctions_manager<'a>(
         &mut self,
         sender_key: &str,
+        chain: &str,
         min_auction_amount: impl AsRef<[(&'a str, MinAmount)]>,
         server_addr: impl AsRef<str>,
     ) -> Result<(), Error> {
         let mut contract_a: CosmWasm = self
             .get_contract()
             .contract(AUCTIONS_MANAGER_CONTRACT_NAME)
+            .src(chain)
             .get_cw();
-        let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
+        let neutron = self.get_chain(chain);
 
         let auction_code_id =
             neutron
@@ -435,6 +502,7 @@ impl TestContext {
     pub fn build_tx_create_price_oracle(&mut self) -> CreatePriceOracleTxBuilder {
         CreatePriceOracleTxBuilder {
             key: DEFAULT_KEY,
+            chain: NEUTRON_CHAIN_NAME,
             seconds_allow_manual_change: 0,
             seconds_auction_prices_fresh: 100000000000,
             test_ctx: self,
@@ -446,10 +514,11 @@ impl TestContext {
     fn tx_create_price_oracle(
         &mut self,
         sender_key: &str,
+        chain: &str,
         seconds_allow_manual_change: u64,
         seconds_auction_prices_fresh: u64,
     ) -> Result<(), Error> {
-        let auctions_manager: CosmWasm = self.get_auctions_manager().get_cw();
+        let auctions_manager: CosmWasm = self.get_auctions_manager().src(chain).get_cw();
         let auctions_manager_addr =
             auctions_manager
                 .contract_addr
@@ -457,7 +526,11 @@ impl TestContext {
                     "contract_addresses::auctions_manager",
                 )))?;
 
-        let mut contract_a = self.get_contract().contract(PRICE_ORACLE_NAME).get_cw();
+        let mut contract_a = self
+            .get_contract()
+            .contract(PRICE_ORACLE_NAME)
+            .src(chain)
+            .get_cw();
         let contract = contract_a.instantiate(
             sender_key,
             serde_json::json!({
@@ -485,6 +558,7 @@ impl TestContext {
     pub fn build_tx_create_auction(&mut self) -> CreateAuctionTxBuilder {
         CreateAuctionTxBuilder {
             key: DEFAULT_KEY,
+            chain: NEUTRON_CHAIN_NAME,
             offer_asset: Default::default(),
             ask_asset: Default::default(),
             auction_strategy: AuctionStrategy {
@@ -510,6 +584,7 @@ impl TestContext {
     fn tx_create_auction<TDenomA: AsRef<str>, TDenomB: AsRef<str>>(
         &mut self,
         sender_key: &str,
+        chain: &str,
         pair: (TDenomA, TDenomB),
         auction_strategy: AuctionStrategy,
         chain_halt_config: ChainHaltConfig,
@@ -518,7 +593,7 @@ impl TestContext {
         amount_denom_a: u128,
     ) -> Result<(), Error> {
         // The auctions manager for this deployment
-        let contract_a = self.get_auctions_manager().get_cw();
+        let contract_a = self.get_auctions_manager().src(chain).get_cw();
         let denom_a = pair.0.as_ref();
 
         let receipt = contract_a.execute(
@@ -560,6 +635,7 @@ impl TestContext {
     pub fn build_tx_migrate_auction(&mut self) -> MigrateAuctionTxBuilder {
         MigrateAuctionTxBuilder {
             key: DEFAULT_KEY,
+            chain: NEUTRON_CHAIN_NAME,
             offer_asset: Default::default(),
             ask_asset: Default::default(),
             test_ctx: self,
@@ -570,13 +646,15 @@ impl TestContext {
     fn tx_migrate_auction<TDenomA: AsRef<str>, TDenomB: AsRef<str>>(
         &mut self,
         sender_key: &str,
+        chain: &str,
         pair: (TDenomA, TDenomB),
     ) -> Result<(), Error> {
         // The auctions manager for this deployment
-        let contract_a = self.get_auctions_manager().get_cw();
+        let contract_a = self.get_auctions_manager().src(chain).get_cw();
         let code_id = self
             .get_contract()
             .contract(AUCTION_CONTRACT_NAME)
+            .src(chain)
             .get_cw()
             .code_id
             .ok_or(Error::MissingContextVariable(String::from(
@@ -620,14 +698,15 @@ impl TestContext {
     pub fn build_tx_update_auction_oracle(&mut self) -> UpdateAuctionOracleTxBuilder {
         UpdateAuctionOracleTxBuilder {
             key: DEFAULT_KEY,
+            chain: NEUTRON_CHAIN_NAME,
             test_ctx: self,
         }
     }
 
-    fn tx_update_auction_oracle(&mut self, sender_key: &str) -> Result<(), Error> {
+    fn tx_update_auction_oracle(&mut self, sender_key: &str, chain: &str) -> Result<(), Error> {
         // The auctions manager for this deployment
-        let contract_a = self.get_auctions_manager().get_cw();
-        let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
+        let contract_a = self.get_auctions_manager().src(chain).get_cw();
+        let neutron = self.get_chain(chain);
         let oracle =
             neutron
                 .contract_addrs
@@ -662,6 +741,7 @@ impl TestContext {
     pub fn build_tx_manual_oracle_price_update(&mut self) -> ManualOraclePriceUpdateTxBuilder {
         ManualOraclePriceUpdateTxBuilder {
             key: DEFAULT_KEY,
+            chain: NEUTRON_CHAIN_NAME,
             offer_asset: Default::default(),
             ask_asset: Default::default(),
             price: Default::default(),
@@ -672,12 +752,13 @@ impl TestContext {
     fn tx_manual_oracle_price_update(
         &mut self,
         sender_key: &str,
+        chain: &str,
         offer_asset: &str,
         ask_asset: &str,
         price: Decimal,
     ) -> Result<(), Error> {
         // The auctions manager for this deployment
-        let oracle = self.get_price_oracle().get_cw();
+        let oracle = self.get_price_oracle().src(chain).get_cw();
 
         let receipt = oracle.execute(
             sender_key,
@@ -705,6 +786,7 @@ impl TestContext {
     pub fn build_tx_fund_auction(&mut self) -> FundAuctionTxBuilder {
         FundAuctionTxBuilder {
             key: DEFAULT_KEY,
+            chain: NEUTRON_CHAIN_NAME,
             offer_asset: Default::default(),
             ask_asset: Default::default(),
             amt_offer_asset: Default::default(),
@@ -716,10 +798,11 @@ impl TestContext {
     fn tx_fund_auction<TDenomA: AsRef<str>, TDenomB: AsRef<str>>(
         &mut self,
         sender_key: &str,
+        chain: &str,
         pair: (TDenomA, TDenomB),
         amt_offer_asset: u128,
     ) -> Result<(), Error> {
-        let manager = self.get_auctions_manager().get_cw();
+        let manager = self.get_auctions_manager().src(chain).get_cw();
 
         let denom_a = pair.0.as_ref();
 
@@ -747,6 +830,7 @@ impl TestContext {
     pub fn build_tx_start_auction(&mut self) -> StartAuctionTxBuilder {
         StartAuctionTxBuilder {
             key: DEFAULT_KEY,
+            chain: NEUTRON_CHAIN_NAME,
             offer_asset: Default::default(),
             ask_asset: Default::default(),
             end_block_delta: Default::default(),
@@ -758,11 +842,12 @@ impl TestContext {
     fn tx_start_auction<TDenomA: AsRef<str>, TDenomB: AsRef<str>>(
         &mut self,
         sender_key: &str,
+        chain: &str,
         end_blocks: u128,
         pair: (TDenomA, TDenomB),
     ) -> Result<(), Error> {
-        let manager = self.get_auctions_manager().get_cw();
-        let neutron = self.get_chain(NEUTRON_CHAIN_NAME);
+        let manager = self.get_auctions_manager().src(chain).get_cw();
+        let neutron = self.get_chain(chain);
 
         let start_block_resp = neutron
             .rb
