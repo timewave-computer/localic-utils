@@ -5,5 +5,3 @@ pub mod config;
 pub mod contract;
 
 pub mod ibc;
-
-pub mod osmosis;

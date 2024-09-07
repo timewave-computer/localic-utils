@@ -1,8 +1,7 @@
 use super::super::{
     super::{
-        error::Error, CW1_WHITELIST_NAME, DEFAULT_KEY, FACTORY_NAME, FACTORY_ON_OSMOSIS_NAME,
-        NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_NAME, OSMOSIS_CHAIN_NAME, PAIR_NAME,
-        STABLE_PAIR_NAME, TOKEN_NAME, TOKEN_REGISTRY_NAME, WHITELIST_NAME,
+        error::Error, DEFAULT_KEY, FACTORY_NAME, NEUTRON_CHAIN_ADMIN_ADDR, NEUTRON_CHAIN_NAME,
+        PAIR_NAME, STABLE_PAIR_NAME, TOKEN_NAME, TOKEN_REGISTRY_NAME, WHITELIST_NAME,
     },
     test_context::TestContext,
 };
@@ -16,6 +15,7 @@ use cosmwasm_std::Decimal;
 /// A tx creating a token registry.
 pub struct CreateTokenRegistryTxBuilder<'a> {
     key: Option<&'a str>,
+    chain: &'a str,
     owner: Option<String>,
     test_ctx: &'a mut TestContext,
 }
@@ -44,6 +44,7 @@ impl<'a> CreateTokenRegistryTxBuilder<'a> {
         self.test_ctx.tx_create_token_registry(
             self.key
                 .ok_or(Error::MissingBuilderParam(String::from("key")))?,
+            self.chain,
             self.owner
                 .clone()
                 .ok_or(Error::MissingBuilderParam(String::from("owner")))?,
@@ -54,6 +55,7 @@ impl<'a> CreateTokenRegistryTxBuilder<'a> {
 /// A tx creating a token registry.
 pub struct CreatePoolTxBuilder<'a> {
     key: &'a str,
+    chain: &'a str,
     pair_type: PairType,
     denom_a: Option<String>,
     denom_b: Option<String>,
@@ -63,6 +65,12 @@ pub struct CreatePoolTxBuilder<'a> {
 impl<'a> CreatePoolTxBuilder<'a> {
     pub fn with_key(&mut self, key: &'a str) -> &mut Self {
         self.key = key;
+
+        self
+    }
+
+    pub fn with_chain(&mut self, chain: &'a str) -> &mut Self {
+        self.chain = chain;
 
         self
     }
@@ -89,6 +97,7 @@ impl<'a> CreatePoolTxBuilder<'a> {
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_create_pool(
             self.key,
+            self.chain,
             self.pair_type.clone(),
             self.denom_a
                 .clone()
@@ -103,6 +112,7 @@ impl<'a> CreatePoolTxBuilder<'a> {
 /// A tx creating an astroport factory.
 pub struct CreateFactoryTxBuilder<'a> {
     key: &'a str,
+    chain: &'a str,
     owner: String,
     test_ctx: &'a mut TestContext,
 }
@@ -110,6 +120,12 @@ pub struct CreateFactoryTxBuilder<'a> {
 impl<'a> CreateFactoryTxBuilder<'a> {
     pub fn with_key(&mut self, key: &'a str) -> &mut Self {
         self.key = key;
+
+        self
+    }
+
+    pub fn with_chain(&mut self, chain: &'a str) -> &mut Self {
+        self.chain = chain;
 
         self
     }
@@ -123,13 +139,14 @@ impl<'a> CreateFactoryTxBuilder<'a> {
     /// Sends the transaction.
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx
-            .tx_create_factory(self.key, self.owner.clone())
+            .tx_create_factory(self.key, self.chain, self.owner.clone())
     }
 }
 
 /// A tx funding an astroport pool.
 pub struct FundPoolTxBuilder<'a> {
     key: &'a str,
+    chain: &'a str,
     denom_a: Option<String>,
     denom_b: Option<String>,
     amt_denom_a: Option<u128>,
@@ -142,6 +159,12 @@ pub struct FundPoolTxBuilder<'a> {
 impl<'a> FundPoolTxBuilder<'a> {
     pub fn with_key(&mut self, key: &'a str) -> &mut Self {
         self.key = key;
+
+        self
+    }
+
+    pub fn with_chain(&mut self, chain: &'a str) -> &mut Self {
+        self.chain = chain;
 
         self
     }
@@ -186,6 +209,7 @@ impl<'a> FundPoolTxBuilder<'a> {
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_fund_pool(
             self.key,
+            self.chain,
             self.denom_a
                 .clone()
                 .ok_or(Error::MissingBuilderParam(String::from("denom_a")))?,
@@ -212,6 +236,7 @@ impl TestContext {
     pub fn build_tx_create_token_registry(&mut self) -> CreateTokenRegistryTxBuilder {
         CreateTokenRegistryTxBuilder {
             key: Some(DEFAULT_KEY),
+            chain: NEUTRON_CHAIN_NAME,
             owner: Some(NEUTRON_CHAIN_ADMIN_ADDR.to_owned()),
             test_ctx: self,
         }
@@ -221,11 +246,12 @@ impl TestContext {
     fn tx_create_token_registry(
         &mut self,
         key: &str,
+        chain: &str,
         owner_addr: impl Into<String>,
     ) -> Result<(), Error> {
         let mut contract_a = self
             .get_contract()
-            .src(NEUTRON_CHAIN_NAME)
+            .src(chain)
             .contract(TOKEN_REGISTRY_NAME)
             .get_cw();
 
@@ -241,7 +267,7 @@ impl TestContext {
         )?;
         let addr = contract.address;
 
-        let neutron = self.get_mut_chain(NEUTRON_CHAIN_NAME);
+        let neutron = self.get_mut_chain(chain);
 
         neutron
             .contract_addrs
@@ -254,6 +280,7 @@ impl TestContext {
     pub fn build_tx_create_factory(&mut self) -> CreateFactoryTxBuilder {
         CreateFactoryTxBuilder {
             key: DEFAULT_KEY,
+            chain: NEUTRON_CHAIN_NAME,
             owner: NEUTRON_CHAIN_ADMIN_ADDR.to_owned(),
             test_ctx: self,
         }
@@ -263,40 +290,37 @@ impl TestContext {
     fn tx_create_factory(
         &mut self,
         key: &str,
+        chain: &str,
         factory_owner: impl Into<String>,
     ) -> Result<(), Error> {
-        let chain = self.get_chain(chain_name);
+        let local_chain = self.get_chain(chain);
 
         let pair_xyk_code_id =
-            neutron
+            local_chain
                 .contract_codes
                 .get(PAIR_NAME)
                 .ok_or(Error::MissingContextVariable(String::from(
                     "contract_codes::astroport_pair",
                 )))?;
-        let pair_stable_code_id =
-            neutron
-                .contract_codes
-                .get(STABLE_PAIR_NAME)
-                .ok_or(Error::MissingContextVariable(String::from(
-                    "contract_codes::astroport_pair_stable",
-                )))?;
+        let pair_stable_code_id = local_chain.contract_codes.get(STABLE_PAIR_NAME).ok_or(
+            Error::MissingContextVariable(String::from("contract_codes::astroport_pair_stable")),
+        )?;
         let token_code_id =
-            neutron
+            local_chain
                 .contract_codes
                 .get(TOKEN_NAME)
                 .ok_or(Error::MissingContextVariable(String::from(
                     "contract_codes::cw20_base",
                 )))?;
         let whitelist_code_id =
-            neutron
+            local_chain
                 .contract_codes
                 .get(WHITELIST_NAME)
                 .ok_or(Error::MissingContextVariable(String::from(
                     "contract_codes::astroport_whitelist",
                 )))?;
 
-        let native_registry_addr = neutron.contract_addrs.get(TOKEN_REGISTRY_NAME).ok_or(
+        let native_registry_addr = local_chain.contract_addrs.get(TOKEN_REGISTRY_NAME).ok_or(
             Error::MissingContextVariable(String::from(
                 "contract_ddrs::astroport_native_coin_registry",
             )),
@@ -304,7 +328,7 @@ impl TestContext {
 
         let mut contract_a = self
             .get_contract()
-            .src(NEUTRON_CHAIN_NAME)
+            .src(chain)
             .contract(FACTORY_NAME)
             .get_cw();
 
@@ -345,9 +369,9 @@ impl TestContext {
             "",
         )?;
 
-        let neutron = self.get_mut_chain(NEUTRON_CHAIN_NAME);
+        let local_chain = self.get_mut_chain(chain);
 
-        neutron
+        local_chain
             .contract_addrs
             .insert(FACTORY_NAME.to_owned(), contract.address);
 
@@ -358,6 +382,7 @@ impl TestContext {
     pub fn build_tx_create_pool(&mut self) -> CreatePoolTxBuilder {
         CreatePoolTxBuilder {
             key: DEFAULT_KEY,
+            chain: NEUTRON_CHAIN_NAME,
             pair_type: PairType::Xyk {},
             denom_a: Default::default(),
             denom_b: Default::default(),
@@ -369,12 +394,13 @@ impl TestContext {
     fn tx_create_pool(
         &self,
         key: &str,
+        chain: &str,
         pair_type: PairType,
         denom_a: impl Into<String>,
         denom_b: impl Into<String>,
     ) -> Result<(), Error> {
         // Factory contract instance
-        let contract_a = self.get_factory().src(NEUTRON_CHAIN_NAME).get_cw();
+        let contract_a = self.get_factory().src(chain).get_cw();
 
         // Create the pair
         let tx = contract_a.execute(
@@ -400,7 +426,7 @@ impl TestContext {
             "transaction did not produce a tx hash",
         )))?;
 
-        self.guard_tx_errors(NEUTRON_CHAIN_NAME, tx_hash.as_str())?;
+        self.guard_tx_errors(chain, tx_hash.as_str())?;
 
         Ok(())
     }
@@ -409,6 +435,7 @@ impl TestContext {
     pub fn build_tx_fund_pool(&mut self) -> FundPoolTxBuilder {
         FundPoolTxBuilder {
             key: DEFAULT_KEY,
+            chain: NEUTRON_CHAIN_NAME,
             denom_a: Default::default(),
             denom_b: Default::default(),
             amt_denom_a: Default::default(),
@@ -424,6 +451,7 @@ impl TestContext {
     fn tx_fund_pool(
         &mut self,
         key: &str,
+        chain: &str,
         denom_a: String,
         denom_b: String,
         amt_denom_a: u128,
@@ -434,7 +462,7 @@ impl TestContext {
         // Get the instance from the address
         let pool = self
             .get_astro_pool()
-            .src(NEUTRON_CHAIN_NAME)
+            .src(chain)
             .denoms(denom_a.clone(), denom_b.clone())
             .get_cw();
 
@@ -468,7 +496,7 @@ impl TestContext {
             .tx_hash
             .ok_or(Error::TxMissingLogs)?;
 
-        self.guard_tx_errors(NEUTRON_CHAIN_NAME, tx.as_str())?;
+        self.guard_tx_errors(chain, tx.as_str())?;
 
         Ok(())
     }
