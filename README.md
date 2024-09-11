@@ -97,7 +97,7 @@ Note that most `tx_*` helper functions expose a `.with_key(key: &str)` builder f
 * `.build_tx_upload_contracts` - Uploads all contracts in the specified artifacts dir to Neutron by default.
   * No required builder calls
   * Notable optional builder calls:
-    `.with_chain_name(chain_name: impl Into<String>)` - Should be one of `"osmosis" | "neutron"` or one of the registered chain names from `.with_chain`
+    * `.with_chain_name(chain_name: impl Into<String>)` - Should be one of `"osmosis" | "neutron"` or one of the registered chain names from `.with_chain`
 #### Wasm
 
 * `.build_tx_instantiate2` - Predictably instantiates a CosmWasm contract.
@@ -107,7 +107,7 @@ Note that most `tx_*` helper functions expose a `.with_key(key: &str)` builder f
 	* `.with_msg(msg: serde_json::Value)`
 	* `.with_label(label: &str)`
   * Notable optional builder calls:
-    `.with_chain_name(chain_name: impl Into<String>)` - Should be one of `"osmosis" | "neutron"` or one of the registered chain names from `.with_chain`
+    * `.with_chain_name(chain_name: impl Into<String>)` - Should be one of `"osmosis" | "neutron"` or one of the registered chain names from `.with_chain`
 
 #### Tokens
 
