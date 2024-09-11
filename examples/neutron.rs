@@ -25,11 +25,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         .build()?;
 
     // Upload contracts
-    ctx.build_tx_upload_contracts().send_with_local_cache(
-        "contracts",
-        NEUTRON_CHAIN_NAME,
-        LOCAL_CODE_ID_CACHE_PATH,
-    )?;
+    ctx.build_tx_upload_contracts()
+        .with_chain_name(NEUTRON_CHAIN_NAME)
+        .send_with_local_cache("contracts", LOCAL_CODE_ID_CACHE_PATH)?;
 
     // Create a token in the tokenfactory
     ctx.build_tx_create_tokenfactory_token()
