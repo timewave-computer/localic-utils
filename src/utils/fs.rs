@@ -52,8 +52,8 @@ impl<'a> UploadContractsTxBuilder<'a> {
                 .ok_or(Error::MissingBuilderParam(String::from("key")))?,
             self.chain_name
                 .ok_or(Error::MissingBuilderParam(String::from("chain_name")))?,
-            local_cache_path,
             path,
+            local_cache_path,
         )
     }
 

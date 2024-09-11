@@ -103,7 +103,7 @@ impl<'a> Instantiate2TxBuilder<'a> {
 }
 
 impl TestContext {
-    pub fn build_tx_instantiate2<'a>(&'a mut self) -> Instantiate2TxBuilder<'a> {
+    pub fn build_tx_instantiate2(&mut self) -> Instantiate2TxBuilder<'_> {
         Instantiate2TxBuilder {
             key: DEFAULT_KEY,
             chain_name: NEUTRON_CHAIN_NAME,
@@ -119,6 +119,7 @@ impl TestContext {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn tx_instantiate2(
         &mut self,
         key: &str,
