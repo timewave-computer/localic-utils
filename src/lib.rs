@@ -43,6 +43,13 @@ pub const STRIDE_CHAIN_PREFIX: &str = "stride";
 pub const STRIDE_CHAIN_ADMIN_ADDR: &str = "stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8";
 pub const STRIDE_CHAIN_NAME: &str = "stride";
 
+/// Juno chain info
+pub const JUNO_CHAIN_ID: &str = "localjuno-1";
+pub const JUNO_CHAIN_NAME: &str = "juno";
+pub const JUNO_CHAIN_PREFIX: &str = "juno";
+pub const JUNO_CHAIN_DENOM: &str = "ujuno";
+pub const JUNO_CHAIN_ADMIN_ADDR: &str = "juno1hj5fveer5cjtn4wd6wstzugjfdxzl0xps73ftl";
+
 /// File names
 pub const AUCTION_CONTRACT_NAME: &str = "auction";
 pub const AUCTIONS_MANAGER_CONTRACT_NAME: &str = "auctions_manager";
