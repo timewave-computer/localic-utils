@@ -1,5 +1,6 @@
 use crate::{
     GAIA_CHAIN_ADMIN_ADDR, GAIA_CHAIN_DENOM, GAIA_CHAIN_ID, GAIA_CHAIN_NAME, GAIA_CHAIN_PREFIX,
+    JUNO_CHAIN_ADMIN_ADDR, JUNO_CHAIN_DENOM, JUNO_CHAIN_ID, JUNO_CHAIN_NAME, JUNO_CHAIN_PREFIX,
     NEUTRON_CHAIN_ID,
 };
 
@@ -122,6 +123,17 @@ impl ConfigChainBuilder {
             chain_name: Some(String::from(STRIDE_CHAIN_NAME)),
             chain_prefix: Some(String::from(STRIDE_CHAIN_PREFIX)),
             admin_addr: Some(String::from(STRIDE_CHAIN_ADMIN_ADDR)),
+        }
+    }
+
+    pub fn default_juno() -> Self {
+        Self {
+            denom: Some(String::from(JUNO_CHAIN_DENOM)),
+            debugging: Some(true),
+            chain_id: Some(String::from(JUNO_CHAIN_ID)),
+            chain_name: Some(String::from(JUNO_CHAIN_NAME)),
+            chain_prefix: Some(String::from(JUNO_CHAIN_PREFIX)),
+            admin_addr: Some(String::from(JUNO_CHAIN_ADMIN_ADDR)),
         }
     }
 }
