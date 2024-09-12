@@ -15,6 +15,7 @@ use std::{
 pub struct UploadContractsTxBuilder<'a> {
     key: Option<&'a str>,
     test_ctx: &'a mut TestContext,
+    chain_name: Option<&'a str>,
 }
 
 impl<'a> UploadContractsTxBuilder<'a> {
@@ -24,11 +25,19 @@ impl<'a> UploadContractsTxBuilder<'a> {
         self
     }
 
+    pub fn with_chain_name(&mut self, chain_name: &'a str) -> &mut Self {
+        self.chain_name = Some(chain_name);
+
+        self
+    }
+
     /// Sends the transaction.
     pub fn send(&mut self) -> Result<(), Error> {
         self.test_ctx.tx_upload_contracts(
             self.key
                 .ok_or(Error::MissingBuilderParam(String::from("key")))?,
+            self.chain_name
+                .ok_or(Error::MissingBuilderParam(String::from("chain_name")))?,
         )
     }
 
@@ -36,15 +45,26 @@ impl<'a> UploadContractsTxBuilder<'a> {
     pub fn send_with_local_cache(
         &mut self,
         path: &str,
-        chain_name: &str,
         local_cache_path: &str,
     ) -> Result<(), Error> {
         self.test_ctx.tx_upload_contracts_with_local_cache(
             self.key
                 .ok_or(Error::MissingBuilderParam(String::from("key")))?,
+            self.chain_name
+                .ok_or(Error::MissingBuilderParam(String::from("chain_name")))?,
             path,
-            chain_name,
             local_cache_path,
+        )
+    }
+
+    /// Sends the transaction using a single contract file
+    pub fn send_single_contract(&mut self, path: &str) -> Result<(), Error> {
+        self.test_ctx.tx_upload_contract(
+            self.key
+                .ok_or(Error::MissingBuilderParam(String::from("key")))?,
+            self.chain_name
+                .ok_or(Error::MissingBuilderParam(String::from("chain_name")))?,
+            path,
         )
     }
 }
@@ -54,10 +74,29 @@ impl TestContext {
         UploadContractsTxBuilder {
             key: Some(DEFAULT_KEY),
             test_ctx: self,
+            chain_name: Some(NEUTRON_CHAIN_NAME),
         }
     }
 
-    fn tx_upload_contracts(&mut self, key: &str) -> Result<(), Error> {
+    fn tx_upload_contract(&mut self, key: &str, chain_name: &str, path: &str) -> Result<(), Error> {
+        let path = fs::canonicalize(path)?;
+
+        let local_chain = self.get_mut_chain(chain_name);
+
+        let mut cw = CosmWasm::new(&local_chain.rb);
+
+        let code_id = cw.store(key, &path)?;
+
+        let id = path
+            .file_stem()
+            .and_then(|stem| stem.to_str())
+            .ok_or(Error::Misc(String::from("failed to format file path")))?;
+        local_chain.contract_codes.insert(id.to_string(), code_id);
+
+        Ok(())
+    }
+
+    fn tx_upload_contracts(&mut self, key: &str, chain_name: &str) -> Result<(), Error> {
         fs::read_dir(&self.artifacts_dir)?
             .filter_map(|dir_ent| dir_ent.ok())
             .filter(|dir_ent| {
@@ -67,9 +106,9 @@ impl TestContext {
             .map(fs::canonicalize)
             .try_for_each(|maybe_abs_path| {
                 let path = maybe_abs_path?;
-                let neutron_local_chain = self.get_mut_chain(NEUTRON_CHAIN_NAME);
+                let local_chain = self.get_mut_chain(chain_name);
 
-                let mut cw = CosmWasm::new(&neutron_local_chain.rb);
+                let mut cw = CosmWasm::new(&local_chain.rb);
 
                 let code_id = cw.store(key, &path)?;
 
@@ -77,9 +116,7 @@ impl TestContext {
                     .file_stem()
                     .and_then(|stem| stem.to_str())
                     .ok_or(Error::Misc(String::from("failed to format file path")))?;
-                neutron_local_chain
-                    .contract_codes
-                    .insert(id.to_string(), code_id);
+                local_chain.contract_codes.insert(id.to_string(), code_id);
 
                 Ok(())
             })
@@ -88,8 +125,8 @@ impl TestContext {
     fn tx_upload_contracts_with_local_cache(
         &mut self,
         key: &str,
-        path: &str,
         chain_name: &str,
+        path: &str,
         local_cache_path: &str,
     ) -> Result<(), Error> {
         if fs::metadata(path).is_ok_and(|m| m.is_dir()) {
