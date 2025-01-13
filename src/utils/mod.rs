@@ -1,3 +1,4 @@
+pub mod ethereum;
 pub mod fs;
 pub mod queries;
 pub mod setup;
